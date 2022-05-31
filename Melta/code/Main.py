@@ -12,7 +12,6 @@ from UI import UI
 from Weapon import Weapon
 from Enemy import Enemy
 from Particles import AnimationPlayer
-from Magic import MagicPlayer
 
 class Main:
     def __init__(self):
@@ -27,7 +26,7 @@ class Main:
         self.animation_player = AnimationPlayer()
         self.perlin = PerlinNoise()
         self.ui = UI()
-        self.magic_player = MagicPlayer(self.animation_player)
+        # self.magic_player = MagicPlayer(self.animation_player)
         self.Tile_map = import_sprite_sheet('../graphics/tilemap/Floor.png')
         #click cooldown
         self.click_cooldown = 400
