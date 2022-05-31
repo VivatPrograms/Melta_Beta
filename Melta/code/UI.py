@@ -12,8 +12,6 @@ class UI:
         #input
         self.click_cooldown = 400
         self.clicking = False
-        self.dragging_inv_item = False
-        self.dragging_crafting_item = False
         self.selected_slot = [0,0]
         self.selected_crafting_slot = [0,0]
         self.inventory_change = True
@@ -38,8 +36,12 @@ class UI:
         self.crafting_item_pos = (tile_size//2,HEIGHT-3*tile_size)
         self.crafting_item_surf = pygame.Surface((tile_size,tile_size))
         self.crafting_item_rect = self.crafting_item_surf.get_rect(topleft=self.crafting_item_pos)
+        #dragging system
+        self.dragging = False
+        self.dragging_item = None
         #general stuff
         self.ui_update(self.inv_surf,self.inventory,self.selected_slot)
+        self.int = 0
 
     def add_item(self, ID, amount, menu):
         if menu == self.inventory:
@@ -86,41 +88,44 @@ class UI:
         menu = old_menu
         return False
 
-    def input(self):
+    def input(self,click):
         self.mouse_pos = pygame.mouse.get_pos()
-        if self.inv_rect.collidepoint(self.mouse_pos) and pygame.mouse.get_pressed()[0]:
-            for y in self.inventory.keys():
-                for x in self.inventory[y]:
-                    pos = pygame.math.Vector2(x * tile_size, y * tile_size) + self.inv_rect.topleft
-                    slot = pygame.Rect((pos), (tile_size, tile_size))
-                    if slot.collidepoint(self.mouse_pos):
-                        self.selected_slot = [x,y]
-                        self.inventory_change = True
-                        if not self.clicking:
-                            self.dragging_inv_item = True
-                            if self.dragging_crafting_item:
-                                self.drag_n_drop([self.inventory,self.crafting_menu],[x,self.selected_crafting_slot[0]],[y,self.selected_crafting_slot[1]])
-        elif self.crafting_rect.collidepoint(self.mouse_pos) and pygame.mouse.get_pressed()[0]:
-            for y in self.crafting_menu.keys():
-                for x in self.crafting_menu[y].keys():
-                    pos = pygame.math.Vector2(x * tile_size, y * tile_size) + self.crafting_rect.topleft
-                    slot = pygame.Rect((pos), (tile_size, tile_size))
-                    if slot.collidepoint(self.mouse_pos):
-                        self.selected_crafting_slot = [x,y]
-                        self.crafting_change = True
-                        if not self.clicking:
-                            self.dragging_crafting_item = True
-                            if self.dragging_inv_item:
-                                self.drag_n_drop([self.crafting_menu,self.inventory],[x,self.selected_slot[0]],[y,self.selected_slot[1]])
-        elif self.crafting_item_rect.collidepoint(self.mouse_pos) and pygame.mouse.get_pressed()[0]:
-            if self.crafting_item != None:
-                self.add_item(Item(Object((0,0),None,self.crafting_item),self.crafting_item_pos,None),1,self.inventory)
+        if click:
+            if self.inv_rect.collidepoint(self.mouse_pos):
+                for y in self.inventory.keys():
+                    for x in self.inventory[y]:
+                        pos = pygame.math.Vector2(x * tile_size, y * tile_size) + self.inv_rect.topleft
+                        slot = pygame.Rect((pos), (tile_size, tile_size))
+                        if slot.collidepoint(self.mouse_pos):
+                            if self.dragging and self.dragging_item['ID'] != None:
+                                self.drop_item(y,x,self.inventory)
+                            elif not self.dragging and self.inventory[y][x]['ID'] != None:
+                                self.dragging = True
+                                self.dragging_item = self.inventory[y][x]
+                            self.selected_slot = [x,y]
+                            self.inventory_change = True
+            elif self.crafting_rect.collidepoint(self.mouse_pos):
                 for y in self.crafting_menu.keys():
                     for x in self.crafting_menu[y].keys():
-                        self.remove(self.crafting_menu[y][x],1,self.crafting_menu[y][x]['amount'])
-        elif pygame.mouse.get_pressed()[0]:
-            self.dragging_inv_item = False
-            self.dragging_crafting_item = False
+                        pos = pygame.math.Vector2(x * tile_size, y * tile_size) + self.crafting_rect.topleft
+                        slot = pygame.Rect((pos), (tile_size, tile_size))
+                        if slot.collidepoint(self.mouse_pos):
+                            if self.dragging and self.dragging_item['ID'] != None:
+                                self.drop_item(y,x,self.crafting_menu)
+                            elif not self.dragging and self.crafting_menu[y][x]['ID'] != None:
+                                self.dragging = True
+                                self.dragging_item = self.crafting_menu[y][x]
+                            self.selected_crafting_slot = [x,y]
+                            self.crafting_change = True
+            elif self.crafting_item_rect.collidepoint(self.mouse_pos):
+                if self.crafting_item != None:
+                    self.add_item(Item(Object((0,0),None,self.crafting_item),self.crafting_item_pos,None),1,self.inventory)
+                    for y in self.crafting_menu.keys():
+                        for x in self.crafting_menu[y].keys():
+                            self.remove(self.crafting_menu[y][x],1,self.crafting_menu[y][x]['amount'])
+            else:
+                self.dragging = False
+                self.dragging_item = None
 
     def cooldowns(self):
         current_time = pygame.time.get_ticks()
@@ -128,22 +133,18 @@ class UI:
             if current_time - self.click_time >= self.click_cooldown:
                 self.clicking = False
 
-    def drag_n_drop(self,menu,x,y):
-        if menu[0][y[0]][x[0]]['ID'] == None:
-            if menu[1][y[1]][x[1]]['ID'] != None:
-                menu[0][y[0]][x[0]]['ID'] = menu[1][y[1]][x[1]]['ID']
-                menu[0][y[0]][x[0]]['amount'] += 1
-                self.remove(menu[1][y[1]][x[1]], 1, menu[1][y[1]][x[1]]['amount'])
-                self.clicking = True
-                self.click_time = pygame.time.get_ticks()
-        elif menu[0][y[0]][x[0]]['ID'] != None:
-            if menu[1][y[1]][x[1]]['ID'] != None:
-                if menu[0][y[0]][x[0]]['ID'].name == menu[1][y[1]][x[1]]['ID'].name:
-                    menu[0][y[0]][x[0]]['amount'] += 1
-                    self.remove(menu[1][y[1]][x[1]], 1, menu[1][y[1]][x[1]]['amount'])
-                    self.clicking = True
-                    self.click_time = pygame.time.get_ticks()
-
+    def drop_item(self,y,x,menu):
+        if menu[y][x]['ID'] != None:
+            if self.dragging_item['ID'].name == menu[y][x]['ID'].name:
+                menu[y][x]['amount'] += 1
+                self.remove(self.dragging_item,1,self.dragging_item['amount'])
+        else:
+            menu[y][x]['ID'] = self.dragging_item['ID']
+            menu[y][x]['amount'] += 1
+            self.remove(self.dragging_item,1,self.dragging_item['amount'])
+        self.dragging_item = None
+        self.dragging = False
+            
     def remove(self,menu,subtract,amount):
         self.inventory_change = True
         self.crafting_change = True
@@ -154,11 +155,6 @@ class UI:
         else:
             menu['ID'] = None
             menu['amount'] = 0
-
-    def drag_item(self,menu,slot,dragging):
-        if menu[slot[1]][slot[0]]['ID'] != None:
-            if dragging:
-                self.display_surface.blit(menu[slot[1]][slot[0]]['ID'].image,self.mouse_pos)
 
     def ui_update(self,surf,menu,slot):
         if menu != None:
@@ -206,18 +202,16 @@ class UI:
             self.ui_update(self.crafting_surf,self.crafting_menu,self.selected_crafting_slot)
             self.crafting()
             self.ui_update(self.crafting_item_surf,None,None)
-        if self.dragging_inv_item:
-            self.drag_item(self.inventory,self.selected_slot,self.dragging_inv_item)
-        if self.dragging_crafting_item:
-            self.drag_item(self.crafting_menu,self.selected_crafting_slot,self.dragging_crafting_item)
+        if self.dragging == True and self.dragging_item['ID'] != None:
+            self.display_surface.blit(self.dragging_item['ID'].image,self.mouse_pos)
 
     def draw(self):
         self.display_surface.blit(self.inv_surf, self.inv_rect)
         self.display_surface.blit(self.crafting_surf,self.crafting_rect)
         self.display_surface.blit(self.crafting_item_surf,self.crafting_item_rect)
 
-    def update(self):
+    def update(self,click):
         self.cooldowns()
-        self.input()
+        self.input(click)
         self.draw()
         self.other()

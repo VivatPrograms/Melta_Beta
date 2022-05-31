@@ -177,7 +177,7 @@ class Main:
     def add_exp(self, amount):
         self.player.exp += amount
 
-    def run(self):
+    def run(self,click):
         self.map_update()
         self.update_sprites()
         self.player_attack_update()
@@ -185,7 +185,7 @@ class Main:
         self.visible_sprites.draw(self.offset)
         self.visible_sprites.enemy_update(self.player)
         self.visible_sprites.update()
-        self.ui.update()
+        self.ui.update(click)
 
 class YSortCameraGroup(pygame.sprite.Group):
     def __init__(self):

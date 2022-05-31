@@ -11,12 +11,15 @@ class Game:
         self.code = Main()
     def run(self):
         while True:
+            click = False
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    click = True
             self.screen.fill('black')
-            self.code.run()
+            self.code.run(click)
             self.clock.tick(FPS)
             self.fps_counter = self.clock.get_fps()
             debug(self.fps_counter)
