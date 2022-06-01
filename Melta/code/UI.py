@@ -16,6 +16,7 @@ class UI:
         self.selected_crafting_slot = [0,0]
         self.inventory_change = True
         self.crafting_change = True
+        self.breaking_pos = None
         #UI
         self.colliding = False
         self.ui_surface = pygame.Surface((WIDTH,HEIGHT))
