@@ -101,6 +101,10 @@ class Main:
                         self.display_breaking(sprite,self.hold_timer,self.time_to_hold,mouse_offset)
                     elif sprite.type == 'item_drop':
                         self.collect_item(sprite)
+                    if not sprite.rect.collidepoint(mouse_offset):   
+                        self.hold_timer = 0
+                        self.breaking = False
+
                 else:
                     self.hold_timer = 0
 
@@ -124,6 +128,7 @@ class Main:
         current_rect = bg_rect.copy()
         current_rect.width = current_width
         pygame.draw.rect(self.breaking_surf,'red',current_rect)
+        pygame.draw.rect(self.breaking_surf,'black',bg_rect,2)
     def break_block(self,sprite,hold_timer):
         if hold_timer >= self.time_to_hold:
             sprite.kill()
