@@ -135,10 +135,12 @@ class Main:
             self.hold_timer = 0
             self.breaking_pos = None
     def place_block(self,mouse_pos):
+        mouse_offset = mouse_pos//tile_size
+        biome = self.perlin.biomes[int(mouse_offset[0] + mouse_offset[1] * grid_width)]
         if self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].type_before == 'block':
-            mouse_offset = (mouse_pos//tile_size)*tile_size
-            Object(mouse_offset, [self.visible_sprites,self.obstacle_sprites,self.interactables], self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].name)
+            Object(mouse_offset*tile_size, [self.visible_sprites,self.obstacle_sprites,self.interactables], self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].name)
             self.remove_item(self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'])
+            print(biome)
     def drop_item(self):
         Item(self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'], self.player.rect.topleft + self.player.facing_offset,[self.visible_sprites, self.interactables])
         self.remove_item(self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'])
