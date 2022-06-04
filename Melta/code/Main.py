@@ -103,6 +103,10 @@ class Main:
                         self.display_breaking(sprite,self.hold_timer,self.time_to_hold)
                     elif sprite.type == 'item_drop':
                         self.collect_item(sprite)
+                    if not sprite.rect.collidepoint(mouse_offset):   
+                        self.hold_timer = 0
+                        self.breaking = False
+
                 else:
                     self.breaking = False
                     self.hold_timer = 0
