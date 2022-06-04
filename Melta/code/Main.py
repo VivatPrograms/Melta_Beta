@@ -86,22 +86,25 @@ class Main:
 
     def manage_input(self):
         key = pygame.key.get_pressed()
-        mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
-        mouse_offset = mouse_pos + self.offset
+        self.mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
+        mouse_offset = self.mouse_pos + self.offset
         self.object_collide = False
         self.breaking = False
+        collisions = 0
         for sprite in self.interactables.sprites():
             if sprite.rect.collidepoint(mouse_offset):
+                collisions += 1
                 self.object_collide = True
                 if pygame.mouse.get_pressed()[0]:
                     if sprite.type == 'block':
+                        self.hold_timer += 1 // collisions
                         self.breaking = True
-                        self.hold_timer += 1
                         self.break_block(sprite,self.hold_timer)
-                        self.display_breaking(sprite,self.hold_timer,self.time_to_hold,mouse_offset)
+                        self.display_breaking(sprite,self.hold_timer,self.time_to_hold)
                     elif sprite.type == 'item_drop':
                         self.collect_item(sprite)
                 else:
+                    self.breaking = False
                     self.hold_timer = 0
 
         if self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'] != None:
@@ -116,14 +119,15 @@ class Main:
                     self.clicking = True
                     self.click_time = pygame.time.get_ticks()
                     self.drop_item()
-    def display_breaking(self,sprite,hold_time,max_time,mouse_offset):
+    def display_breaking(self,sprite,hold_time,max_time):
+        self.under_sprite_pos = sprite.rect.center - self.offset - (42,0)
         bg_rect = self.breaking_surf.get_rect(topleft=(0,0))
-        pygame.draw.rect(self.breaking_surf,'black',bg_rect)
         ratio = hold_time / max_time
-        current_width = bg_rect.width * ratio
         current_rect = bg_rect.copy()
-        current_rect.width = current_width
+        current_rect.width = bg_rect.width * ratio
+        self.breaking_surf.fill('black')
         pygame.draw.rect(self.breaking_surf,'red',current_rect)
+        pygame.draw.rect(self.breaking_surf,'black',bg_rect,2)
     def break_block(self,sprite,hold_timer):
         if hold_timer >= self.time_to_hold:
             sprite.kill()
@@ -143,13 +147,16 @@ class Main:
         self.ui.add_item(sprite,1,self.ui.inventory)
     def remove_item(self,sprite):
         self.ui.remove_item(sprite,1,self.ui.inventory)
-
     def cooldowns(self):
         current_time = pygame.time.get_ticks()
         if self.clicking:
             if current_time - self.click_time >= self.click_cooldown:
                 self.clicking = False
-
+    def animations(self):
+        if self.breaking:
+           self.display_surface.blit(self.breaking_surf,self.under_sprite_pos)
+        else:
+            self.hold_timer = 0
     def update_sprites(self):
         self.manage_input()
         self.cooldowns()
@@ -206,8 +213,7 @@ class Main:
         self.visible_sprites.enemy_update(self.player)
         self.visible_sprites.update()
         self.ui.update(click)
-        if self.breaking:
-           self.display_surface.blit(self.breaking_surf,(0,0))
+        self.animations()
 
 class YSortCameraGroup(pygame.sprite.Group):
     def __init__(self):
