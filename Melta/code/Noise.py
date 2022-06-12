@@ -54,53 +54,51 @@ class PerlinNoise:
                 grid[y].append(self.biome_output(self.temp_grid[y][x], self.hum_grid[y][x]))
 
         for row_index,row in enumerate(grid):
+            self.biomes[row_index] = {}
             for col_index,value in enumerate(row):
                 coord = tile_size*col_index,tile_size*row_index
-                biome = col_index + row_index * grid_width
                 if value == 'water':
-                    self.biomes[biome] = 'water'
+                    self.biomes[row_index][col_index] = 'water'
                     self.container['water'].append(coord)
                     if r(0, 10) == 1:
                         self.container['rock'].append(coord)
                     elif r(0, 50) == 1:
                         self.container['enemy'].append(coord)
                 elif value == 'forest':
-                    self.biomes[biome] = 'forest'
+                    self.biomes[row_index][col_index] = 'forest'
                     self.container['forest'].append(coord)
                     if r(0, 10) == 1:
                         self.container['tree'].append(coord)
                     elif r(0, 50) == 1:
                         self.container['enemy'].append(coord)
                 elif value == 'rainforest':
-                    self.biomes[biome] = 'rainforest'
+                    self.biomes[row_index][col_index] = 'rainforest'
                     self.container['rainforest'].append(coord)
                     if r(0, 10) == 1:
                         self.container['tree'].append(coord)
                     elif r(0, 50) == 1:
                         self.container['enemy'].append(coord)
                 elif value == 'plains':
-                    self.biomes[biome] = 'plains'
+                    self.biomes[row_index][col_index] = 'plains'
                     self.container['plains'].append(coord)
                     if r(0, 10) == 1:
                         self.container['tree'].append(coord)
                     elif r(0, 50) == 1:
                         self.container['enemy'].append(coord)
                 elif value == 'savanna':
-                    self.biomes[biome] = 'savanna'
+                    self.biomes[row_index][col_index] = 'savanna'
                     self.container['savanna'].append(coord)
                     if r(0, 10) == 1:
                         self.container['tree'].append(coord)
                     elif r(0, 50) == 1:
                         self.container['enemy'].append(coord)
                 elif value == 'desert':
-                    self.biomes[biome] = 'desert'
+                    self.biomes[row_index][col_index] = 'desert'
                     self.container['desert'].append(coord)
                     if r(0, 10) == 1:
                         self.container['tree'].append(coord)
                     elif r(0, 50) == 1:
                         self.container['enemy'].append(coord)
-        print(self.biomes)
-
     def biome_output(self,temp,rainfall):
         if temp <= 10 and rainfall <= 10:
             return 'water'

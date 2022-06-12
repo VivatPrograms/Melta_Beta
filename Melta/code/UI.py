@@ -44,37 +44,33 @@ class UI:
         self.ui_update(self.inv_surf,self.inventory,self.selected_slot)
         self.int = 0
 
-    def add_item(self, ID, amount, menu):
-        if menu == self.inventory:
-            self.inventory_change = True
-        elif menu == self.crafting_menu:
-            self.crafting_change = True
-        for y in menu.keys():
-            for slot in menu[y].values():
+    def add_item(self, ID, amount):
+        self.inventory_change = True
+        self.crafting_change = True
+        for y in self.inventory.keys():
+            for slot in self.inventory[y].values():
                 if slot['ID'] != None and ID != None:
                     if slot['ID'].name == ID.name:
                         slot['amount'] += amount
                         return True
 
-        for y in menu.keys():
-            for slot in menu[y].values():
+        for y in self.inventory.keys():
+            for slot in self.inventory[y].values():
                 if slot['ID'] == None:
                     slot['ID'] = ID
                     slot['amount'] += amount
                     return True
         return False
 
-    def remove_item(self, ID, amount, menu):
-        if menu == self.inventory:
-           self.inventory_change = True
-        elif menu == self.crafting_menu:
-            self.crafting_change = True
+    def remove_item(self, ID, amount):
+        self.inventory_change = True
+        self.crafting_change = True
         old_menu = {}
-        for key, value in menu.items():
+        for key, value in self.inventory.items():
             old_menu[key] = {**value}
 
-        for y in menu.keys():
-            for slot in menu[y].values():
+        for y in self.inventory.keys():
+            for slot in self.inventory[y].values():
                 if slot['ID'] == ID:
                     if slot['amount'] >= amount:
                         slot['amount'] -= amount
@@ -86,7 +82,7 @@ class UI:
                         slot['ID'] = None
                         slot['amount'] = 0
 
-        menu = old_menu
+        self.inventory = old_menu
         return False
 
     def input(self,click):
@@ -120,7 +116,7 @@ class UI:
                             self.crafting_change = True
             elif self.crafting_item_rect.collidepoint(self.mouse_pos):
                 if self.crafting_item != None:
-                    self.add_item(Item(Object((0,0),None,self.crafting_item),self.crafting_item_pos,None),1,self.inventory)
+                    self.add_item(Item(Object((0,0),None,self.crafting_item),self.crafting_item_pos,None),1)
                     for y in self.crafting_menu.keys():
                         for x in self.crafting_menu[y].keys():
                             self.remove(self.crafting_menu[y][x],1,self.crafting_menu[y][x]['amount'])

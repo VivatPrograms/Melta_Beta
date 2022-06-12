@@ -1,5 +1,5 @@
 from random import randint
-
+import copy
 import pygame
 
 from Settings import *
@@ -8,6 +8,7 @@ from Item import Item
 from Player import Player
 from Noise import PerlinNoise
 from Import_support import *
+from Ground import Ground
 from UI import UI
 from Weapon import Weapon
 from Enemy import Enemy
@@ -43,7 +44,8 @@ class Main:
         self.breaking_surf = pygame.Surface((86,22))
         #map
         self.generate_map()
-
+        
+    #Map creation/Object creation
     def generate_map(self):
         self.perlin.generate_noise()
         self.grid = self.perlin.container
@@ -75,13 +77,18 @@ class Main:
                     self.map.blit(self.Tile_map[22*5], rect)
                 elif key == 'plains':
                     self.map.blit(self.Tile_map[22*12+3], rect)
+        self.ground_class = Ground(self.map,self.Tile_map)
+        self.ground = copy.deepcopy(self.perlin.biomes)
+        for y in self.perlin.biomes:
+            for x in self.perlin.biomes[y]:
+                self.ground[y][x] = {'ground':self.perlin.biomes[y][x],'seeded_ground':False,'seed':None,'growth_time':None}
 
     def map_update(self):
         self.map_rect = self.map.get_rect()
         self.map_pos = self.map_rect.topleft - self.offset
         self.offset.x = self.player.rect.centerx - WIDTH // 2
         self.offset.y = self.player.rect.centery - HEIGHT // 2
-
+        
     # ---------------------------Map Interactables/Sprites-------------------------------
 
     def manage_input(self):
@@ -119,6 +126,36 @@ class Main:
                     self.clicking = True
                     self.click_time = pygame.time.get_ticks()
                     self.drop_item()
+        if key[pygame.K_i]:
+            if not self.clicking:
+                self.clicking = True
+                self.click_time = pygame.time.get_ticks()
+                if not self.object_collide:
+                    self.ground_class.ground_logic(mouse_offset,self.ground,self.perlin.biomes)
+        elif key[pygame.K_j]:
+            if not self.clicking:
+                self.clicking = True
+                self.click_time = pygame.time.get_ticks()
+                if not self.object_collide:
+                    self.ground_class.seeding_logic(mouse_offset,self.ground,'tree',self.ui)
+        for y in self.ground:
+            for x in self.ground[y]:
+                if self.ground[y][x]['seeded_ground']:
+                    self.ground_class.check_growth(self.ground,y,x)
+                        
+    #Block logic
+    def break_block(self,sprite,hold_timer):
+        if hold_timer >= self.time_to_hold:
+            sprite.kill()
+            Item(sprite, sprite.rect.center, [self.visible_sprites,self.interactables])
+            self.hold_timer = 0
+            self.breaking_pos = None
+    def place_block(self,mouse_pos):
+        mouse_offset = mouse_pos//tile_size
+        biome = self.perlin.biomes[mouse_offset[1]][mouse_offset[0]]
+        if self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].type_before == 'block':
+            Object(mouse_offset*tile_size, [self.visible_sprites,self.obstacle_sprites,self.interactables], self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].name)
+            self.remove_item(self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'])
     def display_breaking(self,sprite,hold_time,max_time):
         self.under_sprite_pos = sprite.rect.center - self.offset - (42,0)
         bg_rect = self.breaking_surf.get_rect(topleft=(0,0))
@@ -128,27 +165,16 @@ class Main:
         self.breaking_surf.fill('black')
         pygame.draw.rect(self.breaking_surf,'red',current_rect)
         pygame.draw.rect(self.breaking_surf,'black',bg_rect,2)
-    def break_block(self,sprite,hold_timer):
-        if hold_timer >= self.time_to_hold:
-            sprite.kill()
-            Item(sprite, sprite.rect.center, [self.visible_sprites,self.interactables])
-            self.hold_timer = 0
-            self.breaking_pos = None
-    def place_block(self,mouse_pos):
-        mouse_offset = mouse_pos//tile_size
-        biome = self.perlin.biomes[int(mouse_offset[0] + mouse_offset[1] * grid_width)]
-        if self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].type_before == 'block':
-            Object(mouse_offset*tile_size, [self.visible_sprites,self.obstacle_sprites,self.interactables], self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].name)
-            self.remove_item(self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'])
-            print(biome)
+    #Item logic
     def drop_item(self):
         Item(self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'], self.player.rect.topleft + self.player.facing_offset,[self.visible_sprites, self.interactables])
         self.remove_item(self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'])
     def collect_item(self,sprite):
         sprite.kill()
-        self.ui.add_item(sprite,1,self.ui.inventory)
+        self.ui.add_item(sprite,1)
     def remove_item(self,sprite):
-        self.ui.remove_item(sprite,1,self.ui.inventory)
+        self.ui.remove_item(sprite,1)
+    #More general stuff
     def cooldowns(self):
         current_time = pygame.time.get_ticks()
         if self.clicking:
