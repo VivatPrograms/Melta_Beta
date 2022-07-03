@@ -1,7 +1,9 @@
-from random import randint
+from random import randint, choice
 import copy
+from re import T
+from numpy import tile
 import pygame
-
+from math import dist
 from Settings import *
 from Object import Object
 from Item import Item
@@ -11,7 +13,6 @@ from Import_support import *
 from Ground import Ground
 from UI import UI
 from Weapon import Weapon
-from Enemy import Enemy
 from Particles import AnimationPlayer
 
 class Main:
@@ -28,7 +29,7 @@ class Main:
         self.perlin = PerlinNoise()
         self.ui = UI()
         # self.magic_player = MagicPlayer(self.animation_player)
-        self.Tile_map = import_sprite_sheet('../graphics/tilemap/Floor.png')
+        self.Tile_map = import_sprite_sheet('../graphics/Tilemap.png')
         #click cooldown
         self.click_cooldown = 400
         self.clicking_cooldown = None
@@ -36,7 +37,6 @@ class Main:
         self.clicking = False
         self.offset = pygame.math.Vector2()
         self.object_collide = False
-        self.input = False
         #breaking
         self.time_to_hold = 100
         self.hold_timer = 0
@@ -56,32 +56,57 @@ class Main:
                 rect = self.Tile_map[0].get_rect(topleft=(coord))
                 #obstacles/enemies
                 if key == 'rock':
-                    self.object = Object(coord,[self.visible_sprites,self.obstacle_sprites,self.interactables],'rock')
+                    self.object = Object(coord,[self.visible_sprites,self.obstacle_sprites,self.interactables],choice(names['rock']),'rock')
                 elif key == 'tree':
-                    self.object = Object(coord,[self.visible_sprites,self.obstacle_sprites,self.interactables],'tree')
-                elif key == 'enemy':
-                    Enemy('squid', coord, [self.visible_sprites, self.attackable_sprites], self.obstacle_sprites,
-                          self.damage_player, self.trigger_death_particles, self.add_exp)
+                    self.object = Object(coord,[self.visible_sprites,self.obstacle_sprites,self.interactables],choice(names['tree']),'tree')
+                elif key == 'cactus':
+                    self.object = Object(coord,[self.visible_sprites,self.obstacle_sprites,self.interactables],choice(names['cactus']),'cactus')
+                # elif key == 'enemy':
+                #     Enemy('squid', coord, [self.visible_sprites, self.attackable_sprites], self.obstacle_sprites,
+                #           self.damage_player, self.trigger_death_particles, self.add_exp)
                 #biomes
                 if key == 'water':
-                    self.map.blit(self.Tile_map[22*12+8], rect)
-                elif key == 'beach':
-                    self.map.blit(self.Tile_map[22*1+1], rect)
+                    self.map.blit(pygame.image.load('../graphics/tiles/water.png').convert_alpha(), rect)
                 elif key == 'forest':
-                    self.map.blit(self.Tile_map[22*11+3], rect)
+                    self.map.blit(pygame.image.load('../graphics/tiles/forest.png').convert_alpha(), rect)
                 elif key == 'rainforest':
-                    self.map.blit(self.Tile_map[22*12+2], rect)
+                    self.map.blit(pygame.image.load('../graphics/tiles/rainforest.png').convert_alpha(), rect)
                 elif key == 'savanna':
-                    self.map.blit(self.Tile_map[22*5+3], rect)
+                    self.map.blit(pygame.image.load('../graphics/tiles/savanna.png').convert_alpha(), rect)
                 elif key == 'desert':
-                    self.map.blit(self.Tile_map[22*5], rect)
+                    self.map.blit(pygame.image.load('../graphics/tiles/desert.png').convert_alpha(), rect)
                 elif key == 'plains':
-                    self.map.blit(self.Tile_map[22*12+3], rect)
+                    self.map.blit(pygame.image.load('../graphics/tiles/plains.png').convert_alpha(), rect)
+                #water surrounded
+                if key == 'left':
+                    self.map.blit(self.Tile_map[16*12+3], rect)
+                if key == 'right':
+                    self.map.blit(self.Tile_map[16*12+6], rect)
+                if key == 'top':
+                    self.map.blit(self.Tile_map[16*11+4], rect)
+                if key == 'bottom':
+                    self.map.blit(self.Tile_map[16*13+4], rect)
+                if key == 'topleft':
+                    self.map.blit(self.Tile_map[16*4], rect)
+                if key == 'bottomleft':
+                    self.map.blit(self.Tile_map[16*5], rect)
+                if key == 'topright':
+                    self.map.blit(self.Tile_map[16*4+1], rect)
+                if key == 'bottomright':
+                    self.map.blit(self.Tile_map[16*5+1], rect)
+                if key == 'surrounded_topleft':
+                    self.map.blit(self.Tile_map[16*11+3], rect)
+                if key == 'surrounded_bottomleft':
+                    self.map.blit(self.Tile_map[16*13+3], rect)
+                if key == 'surrounded_topright':
+                    self.map.blit(self.Tile_map[16*11+6], rect)
+                if key == 'surrounded_bottomright':
+                    self.map.blit(self.Tile_map[16*13+6], rect)
         self.ground_class = Ground(self.map,self.Tile_map)
         self.ground = copy.deepcopy(self.perlin.biomes)
         for y in self.perlin.biomes:
             for x in self.perlin.biomes[y]:
-                self.ground[y][x] = {'ground':self.perlin.biomes[y][x],'seeded_ground':False,'seed':None,'growth_time':None}
+                self.ground[y][x] = {'ground':self.perlin.biomes[y][x],'seeded_ground':False,'seed':None,'growth_time':None,'mixed':False}
 
     def map_update(self):
         self.map_rect = self.map.get_rect()
@@ -91,15 +116,14 @@ class Main:
         
     # ---------------------------Map Interactables/Sprites-------------------------------
 
-    def manage_input(self):
-        key = pygame.key.get_pressed()
+    def mouse_input(self):
         self.mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
-        mouse_offset = self.mouse_pos + self.offset
+        self.mouse_offset = self.mouse_pos + self.offset
         self.object_collide = False
         self.breaking = False
         collisions = 0
         for sprite in self.interactables.sprites():
-            if sprite.rect.collidepoint(mouse_offset):
+            if sprite.rect.collidepoint(self.mouse_offset):
                 collisions += 1
                 self.object_collide = True
                 if pygame.mouse.get_pressed()[0]:
@@ -108,20 +132,34 @@ class Main:
                         self.breaking = True
                         self.break_block(sprite,self.hold_timer)
                         self.display_breaking(sprite,self.hold_timer,self.time_to_hold)
-                    elif sprite.type == 'item_drop':
+                    else:
                         self.collect_item(sprite)
                 else:
                     self.breaking = False
                     self.hold_timer = 0
-
+        if pygame.mouse.get_pressed()[2] and not self.object_collide:
+            if self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'] != None:
+                if self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].type == 'seed':
+                    self.seed_ground()
+        elif pygame.mouse.get_pressed()[0] and not self.object_collide:
+            self.harvest()
+    def seed_ground(self):
+        self.ground_class.seeding_logic(self.ground,self.ui,self.mouse_offset,
+                                        self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].key)
+    def harvest(self):
+        self.ground_class.harvest(self.ground,self.ui,self.mouse_offset)
+                                  
+        #make seeding logic more logic.
+    def key_input(self):
+        key = pygame.key.get_pressed()
         if self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'] != None:
-            if key[pygame.K_p]:
-                if not self.clicking:
-                    self.clicking = True
-                    self.click_time = pygame.time.get_ticks()
-                    if not self.object_collide:
-                        self.place_block(mouse_offset)
-            elif key[pygame.K_q]:
+            if not self.object_collide:
+                if key[pygame.K_p]:
+                    if not self.clicking:
+                        self.clicking = True
+                        self.click_time = pygame.time.get_ticks()
+                        self.place_block(self.mouse_offset)
+            if key[pygame.K_q]:
                 if not self.clicking:
                     self.clicking = True
                     self.click_time = pygame.time.get_ticks()
@@ -130,32 +168,30 @@ class Main:
             if not self.clicking:
                 self.clicking = True
                 self.click_time = pygame.time.get_ticks()
-                if not self.object_collide:
-                    self.ground_class.ground_logic(mouse_offset,self.ground,self.perlin.biomes)
-        elif key[pygame.K_j]:
-            if not self.clicking:
-                self.clicking = True
-                self.click_time = pygame.time.get_ticks()
-                if not self.object_collide:
-                    self.ground_class.seeding_logic(mouse_offset,self.ground,'tree',self.ui)
+                self.ground_class.ground_logic(self.mouse_offset,self.ground,self.perlin.biomes)
+
         for y in self.ground:
             for x in self.ground[y]:
                 if self.ground[y][x]['seeded_ground']:
-                    self.ground_class.check_growth(self.ground,y,x)
-                        
+                    self.ground_class.run(self.ground,y,x)
+
     #Block logic
     def break_block(self,sprite,hold_timer):
         if hold_timer >= self.time_to_hold:
             sprite.kill()
-            Item(sprite, sprite.rect.center, [self.visible_sprites,self.interactables])
             self.hold_timer = 0
             self.breaking_pos = None
+            if randint(0,3) == 1:
+                Item(sprite, sprite.rect.center, [self.visible_sprites,self.interactables],False)
+            elif randint(0,3) == 2:
+                Item(sprite, sprite.rect.center, [self.visible_sprites,self.interactables],True)
     def place_block(self,mouse_pos):
         mouse_offset = mouse_pos//tile_size
         biome = self.perlin.biomes[mouse_offset[1]][mouse_offset[0]]
-        if self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].type_before == 'block':
-            Object(mouse_offset*tile_size, [self.visible_sprites,self.obstacle_sprites,self.interactables], self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].name)
-            self.remove_item(self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'])
+        if biome != 'water':
+            if self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].type_before == 'block' and self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].type == 'item_drop':
+                Object(mouse_offset*tile_size, [self.visible_sprites,self.obstacle_sprites,self.interactables], self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].name,self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].key)
+                self.remove_item(self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'])
     def display_breaking(self,sprite,hold_time,max_time):
         self.under_sprite_pos = sprite.rect.center - self.offset - (42,0)
         bg_rect = self.breaking_surf.get_rect(topleft=(0,0))
@@ -167,7 +203,8 @@ class Main:
         pygame.draw.rect(self.breaking_surf,'black',bg_rect,2)
     #Item logic
     def drop_item(self):
-        Item(self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'], self.player.rect.topleft + self.player.facing_offset,[self.visible_sprites, self.interactables])
+        Item(self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'], self.player.rect.topleft + self.player.facing_offset,[self.visible_sprites, self.interactables],
+             True if self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].type == 'seed' else False)
         self.remove_item(self.ui.inventory[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'])
     def collect_item(self,sprite):
         sprite.kill()
@@ -185,8 +222,10 @@ class Main:
            self.display_surface.blit(self.breaking_surf,self.under_sprite_pos)
         else:
             self.hold_timer = 0
+                    
     def update_sprites(self):
-        self.manage_input()
+        self.mouse_input()
+        self.key_input()
         self.cooldowns()
 
     #---------------------------Player attack Logic-------------------------------

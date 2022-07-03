@@ -66,6 +66,101 @@ monster_data = {
     'bamboo': {'health': 70,'exp':120,'damage':6,'attack_type': 'leaf_attack', 'attack_sound':'../audio/attack/slash.wav', 'speed': 3, 'resistance': 3, 'attack_radius': 50, 'notice_radius': 300}}
 
 growth_times = {
-    'tree':100
+    'tree':100,
+    'rock':200,
+    'cactus':50
+}
+object_path = '../graphics/objects'
+names = {'tree' : ['oak_tree','birch_tree',
+              'magical_tree','mystical_tree'],
+        'rock' : ['rock','small_rock'],
+        'cactus' : ['cactus_0','cactus_1','small_cactus_0','small_cactus_1']}
+water_dir = {
+    -1: {-1:'topleft',
+         0:'top',
+         1:'topright'},
+    0: {-1:'left',
+         1:'right'},
+    1: {-1:'bottomleft',
+        0:'bottom',
+        1:'bottomright'}}
+object_chance = {
+    'tree':(0,10),
+    'rock':(0,10),
+    'cactus':(0,10)
+}
+object_offset = {
+    'birch_tree':(32,96),
+    'oak_tree':(32,96),
+    'magical_tree':(32,96),
+    'mystical_tree':(32,96),
+    'rock':(28,32),
+    'small_rock':(28,32),
+    'cactus_0':(8,32),
+    'cactus_1':(8,32),
+    'small_cactus_0':(2,6),
+    'small_cactus_1':(2,6)
 }
 
+change_tile = {
+    "[['w', '.', '.'], ['w', '_', '.'], ['w', '.', '.']]":'left',
+    "[['w', '.', '.'], ['w', '_', '.'], ['.', '.', '.']]":'left',
+    "[['.', '.', '.'], ['w', '_', '.'], ['w', '.', '.']]":'left',
+    "[['.', '.', '.'], ['w', '_', '.'], ['.', '.', '.']]":'left',
+    "[['w', '.', '.'], ['.', '_', '.'], ['w', '.', '.']]":'left',
+    
+    "[['.', '.', 'w'], ['.', '_', 'w'], ['.', '.', 'w']]":'right',
+    "[['.', '.', 'w'], ['.', '_', 'w'], ['.', '.', '.']]":'right',
+    "[['.', '.', '.'], ['.', '_', 'w'], ['.', '.', 'w']]":'right',
+    "[['.', '.', '.'], ['.', '_', 'w'], ['.', '.', '.']]":'right',
+    "[['.', '.', 'w'], ['.', '_', '.'], ['.', '.', 'w']]":'right',
+    
+    "[['w', 'w', 'w'], ['.', '_', '.'], ['.', '.', '.']]":'top',
+    "[['w', 'w', '.'], ['.', '_', '.'], ['.', '.', '.']]":'top',
+    "[['.', 'w', 'w'], ['.', '_', '.'], ['.', '.', '.']]":'top',
+    "[['.', 'w', '.'], ['.', '_', '.'], ['.', '.', '.']]":'top',
+    "[['w', '.', 'w'], ['.', '_', '.'], ['.', '.', '.']]":'top',
+    
+    "[['.', '.', '.'], ['.', '_', '.'], ['w', 'w', 'w']]":'bottom',
+    "[['.', '.', '.'], ['.', '_', '.'], ['w', 'w', '.']]":'bottom',
+    "[['.', '.', '.'], ['.', '_', '.'], ['.', 'w', 'w']]":'bottom',
+    "[['.', '.', '.'], ['.', '_', '.'], ['.', 'w', '.']]":'bottom',
+    "[['.', '.', '.'], ['.', '_', '.'], ['w', '.', 'w']]":'bottom',
+    
+    "[['w', '.', '.'], ['.', '_', '.'], ['.', '.', '.']]":'topleft',
+    "[['.', '.', '.'], ['.', '_', '.'], ['w', '.', '.']]":'bottomleft',
+    "[['.', '.', 'w'], ['.', '_', '.'], ['.', '.', '.']]":'topright',
+    "[['.', '.', '.'], ['.', '_', '.'], ['.', '.', 'w']]":'bottomright',
+    
+    "[['w', 'w', '.'], ['w', '_', '.'], ['.', '.', '.']]":'surrounded_topleft',
+    "[['w', 'w', '.'], ['w', '_', '.'], ['w', '.', '.']]":'surrounded_topleft',
+    "[['w', 'w', 'w'], ['w', '_', '.'], ['.', '.', '.']]":'surrounded_topleft',
+    "[['w', 'w', 'w'], ['w', '_', '.'], ['w', '.', '.']]":'surrounded_topleft',
+    "[['.', 'w', 'w'], ['w', '_', '.'], ['.', '.', '.']]":'surrounded_topleft',
+    "[['.', 'w', 'w'], ['w', '_', '.'], ['w', '.', '.']]":'surrounded_topleft',
+    "[['w', 'w', 'w'], ['.', '_', '.'], ['w', '.', '.']]":'surrounded_topleft',
+    
+    "[['.', '.', '.'], ['w', '_', '.'], ['w', 'w', '.']]":'surrounded_bottomleft',
+    "[['w', '.', '.'], ['w', '_', '.'], ['w', 'w', '.']]":'surrounded_bottomleft',
+    "[['.', '.', '.'], ['w', '_', '.'], ['w', 'w', 'w']]":'surrounded_bottomleft',
+    "[['w', '.', '.'], ['w', '_', '.'], ['w', 'w', 'w']]":'surrounded_bottomleft',
+    "[['.', '.', '.'], ['w', '_', '.'], ['.', 'w', 'w']]":'surrounded_bottomleft',
+    "[['w', '.', '.'], ['w', '_', '.'], ['.', 'w', 'w']]":'surrounded_bottomleft',
+    "[['w', '.', '.'], ['.', '_', '.'], ['w', 'w', 'w']]":'surrounded_bottomleft',
+    
+    "[['.', 'w', 'w'], ['.', '_', 'w'], ['.', '.', '.']]":'surrounded_topright',
+    "[['.', 'w', 'w'], ['.', '_', 'w'], ['.', '.', 'w']]":'surrounded_topright',
+    "[['w', 'w', 'w'], ['.', '_', 'w'], ['.', '.', '.']]":'surrounded_topright',
+    "[['w', 'w', 'w'], ['.', '_', 'w'], ['.', '.', 'w']]":'surrounded_topright',
+    "[['w', 'w', '.'], ['.', '_', 'w'], ['.', '.', '.']]":'surrounded_topright',
+    "[['w', 'w', '.'], ['.', '_', 'w'], ['.', '.', 'w']]":'surrounded_topright',
+    "[['w', 'w', 'w'], ['.', '_', '.'], ['.', '.', 'w']]":'surrounded_topright',
+    
+    "[['.', '.', '.'], ['.', '_', 'w'], ['.', 'w', 'w']]":'surrounded_bottomright',
+    "[['.', '.', 'w'], ['.', '_', 'w'], ['.', 'w', 'w']]":'surrounded_bottomright',
+    "[['.', '.', '.'], ['.', '_', 'w'], ['w', 'w', 'w']]":'surrounded_bottomright',
+    "[['.', '.', 'w'], ['.', '_', 'w'], ['w', 'w', 'w']]":'surrounded_bottomright',
+    "[['.', '.', '.'], ['.', '_', 'w'], ['w', 'w', '.']]":'surrounded_bottomright',
+    "[['.', '.', 'w'], ['.', '_', 'w'], ['w', 'w', '.']]":'surrounded_bottomright',
+    "[['.', '.', 'w'], ['.', '_', '.'], ['w', 'w', 'w']]":'surrounded_bottomright'
+}

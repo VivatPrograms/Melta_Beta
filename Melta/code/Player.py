@@ -1,14 +1,19 @@
 import pygame
 from Settings import *
-from Import_support import import_folder
+from Import_support import *
 from Entity import Entity
 
 class Player(Entity):
     def __init__(self,pos,groups,obstacle_sprites,create_attack,destroy_attack,create_magic):
         super().__init__(groups)
-        self.image = pygame.image.load('../graphics/test/player.png').convert_alpha()
+        #import sprite assets
+        self.player_images = import_sprite_sheet('../graphics/player/Bob.png',(64,23))
+        self.player_idle_images = import_sprite_sheet('../graphics/player/Bob_idle_animation.png',(64,23))
+        self.player_run_images = import_sprite_sheet('../graphics/player/Bob_run_animation.png',(64,23))
+        #sprite setup
+        self.image = self.player_images[0].convert_alpha()
         self.rect = self.image.get_rect(topleft = pos)
-        self.hitbox = self.rect.inflate(-6,HITBOX_OFFSET['player'])
+        self.hitbox = self.rect.inflate(-16,0)
         self.name = 'player'
         self.type = self.name
         #graphics setup

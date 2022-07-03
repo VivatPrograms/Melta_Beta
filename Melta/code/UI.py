@@ -14,8 +14,8 @@ class UI:
         self.clicking = False
         self.selected_slot = [0,0]
         self.selected_crafting_slot = [0,0]
-        self.inventory_change = True
-        self.crafting_change = True
+        self.inventory_change = False
+        self.crafting_change = False
         self.breaking_pos = None
         #UI
         self.colliding = False
@@ -42,6 +42,7 @@ class UI:
         self.dragging_item = None
         #general stuff
         self.ui_update(self.inv_surf,self.inventory,self.selected_slot)
+        self.ui_update(self.crafting_surf,self.crafting_menu,self.selected_crafting_slot)
         self.int = 0
 
     def add_item(self, ID, amount):
@@ -50,7 +51,7 @@ class UI:
         for y in self.inventory.keys():
             for slot in self.inventory[y].values():
                 if slot['ID'] != None and ID != None:
-                    if slot['ID'].name == ID.name:
+                    if slot['ID'].name == ID.name and slot['ID'].type == ID.type:
                         slot['amount'] += amount
                         return True
 
@@ -116,7 +117,7 @@ class UI:
                             self.crafting_change = True
             elif self.crafting_item_rect.collidepoint(self.mouse_pos):
                 if self.crafting_item != None:
-                    self.add_item(Item(Object((0,0),None,self.crafting_item),self.crafting_item_pos,None),1)
+                    self.add_item(Item(Object((0,0),None,self.crafting_item),self.crafting_item_pos,None,False),1)
                     for y in self.crafting_menu.keys():
                         for x in self.crafting_menu[y].keys():
                             self.remove(self.crafting_menu[y][x],1,self.crafting_menu[y][x]['amount'])
@@ -132,9 +133,10 @@ class UI:
 
     def drop_item(self,y,x,menu):
         if menu[y][x]['ID'] != None:
-            if self.dragging_item['ID'].name == menu[y][x]['ID'].name:
-                menu[y][x]['amount'] += 1
-                self.remove(self.dragging_item,1,self.dragging_item['amount'])
+            if self.dragging_item['ID'].type == menu[y][x]['ID'].type:
+                if self.dragging_item['ID'].name == menu[y][x]['ID'].name:
+                    menu[y][x]['amount'] += 1
+                    self.remove(self.dragging_item,1,self.dragging_item['amount'])
         else:
             menu[y][x]['ID'] = self.dragging_item['ID']
             menu[y][x]['amount'] += 1
@@ -179,18 +181,57 @@ class UI:
                     pygame.Rect((0, 0), (tile_size, tile_size)))
                 self.crafting_item_surf.blit(img, (0, 0))
             pygame.draw.rect(self.crafting_item_surf, 'gold', pygame.Rect((0, 0), (tile_size, tile_size)), 2)
+            self.crafting_change = False
 
     def crafting(self):
-        crafting = [[None,None],[None,None]]
-        for y in self.crafting_menu.keys():
-            for x in self.crafting_menu[y].keys():
-                if self.crafting_menu[y][x]['ID'] != None:
-                    crafting[y][x] = self.crafting_menu[y][x]['ID'].name
+                # crafting[y][x] = f"{self.crafting_menu[y][x]['ID'].name}_{self.crafting_menu[y][x]['ID'].type}"
         for key in recipes.keys():
-            if crafting == recipes[key]:
-                self.crafting_item = key
-            else:
-                self.crafting_item = None
+            types = recipes[key]['type']
+            if types == 0:
+                crafting = [[None,None],[None,None]]
+                for y in self.crafting_menu.keys():
+                    for x in self.crafting_menu[y].keys():
+                        if self.crafting_menu[y][x]['ID'] != None:
+                            if self.crafting_menu[y][x]['ID'].type != 'seed':
+                                crafting[y][x] = self.crafting_menu[y][x]['ID'].name
+                        else:
+                            crafting[y][x] = None
+                lists = crafting[0]+crafting[1]
+                if lists.count('tree') == 1 and lists.count(None) == 3:
+                    self.crafting_item = key
+                    break
+                else:
+                    self.crafting_item = None  
+                        
+            elif types == 1:
+                crafting = [[],[]]
+                x_level = []
+                for y in self.crafting_menu.keys():
+                    for x in self.crafting_menu[y].keys():
+                        if self.crafting_menu[y][x]['ID'] != None:
+                            if self.crafting_menu[y][x]['ID'].type != 'seed':
+                                crafting[y].append(self.crafting_menu[y][x]['ID'].name)
+                                x_level.append(x)  
+                if crafting == recipes[key]['recipe'] and x_level[0] == x_level[1]:
+                    self.crafting_item = key
+                    break
+                else:
+                    self.crafting_item = None
+            
+            elif types == 2:
+                crafting = [[None,None],[None,None]]
+                for y in self.crafting_menu.keys():
+                    for x in self.crafting_menu[y].keys():
+                        if self.crafting_menu[y][x]['ID'] != None:
+                            if self.crafting_menu[y][x]['ID'].type != 'seed':
+                                crafting[y][x] = self.crafting_menu[y][x]['ID'].name
+                        else:
+                            crafting[y][x] = None
+                if crafting == recipes[key]['recipe']:
+                    self.crafting_item = key
+                    break
+                else:
+                    self.crafting_item = None  
 
     def other(self):
         if self.inventory_change:

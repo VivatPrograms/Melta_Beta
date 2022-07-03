@@ -2,11 +2,14 @@ from perlin import Perlin
 import random
 from random import randint as r
 from Settings import *
-random.seed(1)
+random.seed(1648)
 class PerlinNoise:
     def __init__(self):
         self.noise = Perlin(r(0,1000))
-        self.container = {'water':[],'forest':[],'rainforest':[],'plains':[],'savanna':[],'desert':[],'tree':[],'rock':[],'enemy':[]}
+        self.container = {'water':[],'forest':[],'rainforest':[],'plains':[],'savanna':[],'desert':[],'tree':[],'rock':[],'cactus':[],
+                          'enemy':[],
+                          'topleft':[],'top':[],'topright':[],'left':[],'right':[],'bottomleft':[],'bottom':[],'bottomright':[],
+                          'surrounded_topleft':[],'surrounded_topright':[],'surrounded_bottomleft':[],'surrounded_bottomright':[]}
         self.biomes = {}
     def generate_noise(self):
         high = 0
@@ -58,59 +61,55 @@ class PerlinNoise:
             for col_index,value in enumerate(row):
                 coord = tile_size*col_index,tile_size*row_index
                 if value == 'water':
-                    self.biomes[row_index][col_index] = 'water'
-                    self.container['water'].append(coord)
-                    if r(0, 10) == 1:
-                        self.container['rock'].append(coord)
-                    elif r(0, 50) == 1:
-                        self.container['enemy'].append(coord)
-                elif value == 'forest':
-                    self.biomes[row_index][col_index] = 'forest'
-                    self.container['forest'].append(coord)
-                    if r(0, 10) == 1:
-                        self.container['tree'].append(coord)
-                    elif r(0, 50) == 1:
-                        self.container['enemy'].append(coord)
-                elif value == 'rainforest':
-                    self.biomes[row_index][col_index] = 'rainforest'
-                    self.container['rainforest'].append(coord)
-                    if r(0, 10) == 1:
-                        self.container['tree'].append(coord)
-                    elif r(0, 50) == 1:
-                        self.container['enemy'].append(coord)
-                elif value == 'plains':
-                    self.biomes[row_index][col_index] = 'plains'
-                    self.container['plains'].append(coord)
-                    if r(0, 10) == 1:
-                        self.container['tree'].append(coord)
-                    elif r(0, 50) == 1:
-                        self.container['enemy'].append(coord)
-                elif value == 'savanna':
-                    self.biomes[row_index][col_index] = 'savanna'
-                    self.container['savanna'].append(coord)
-                    if r(0, 10) == 1:
-                        self.container['tree'].append(coord)
-                    elif r(0, 50) == 1:
-                        self.container['enemy'].append(coord)
+                    self.biomes[row_index][col_index] = value
+                    self.container[value].append(coord)
+                    self.randomise_object('rock',coord)
                 elif value == 'desert':
-                    self.biomes[row_index][col_index] = 'desert'
-                    self.container['desert'].append(coord)
-                    if r(0, 10) == 1:
-                        self.container['tree'].append(coord)
-                    elif r(0, 50) == 1:
-                        self.container['enemy'].append(coord)
+                    self.biomes[row_index][col_index] = value
+                    self.container[value].append(coord)
+                    self.randomise_object('cactus',coord)
+                else:
+                    if not self.nearby_water(grid, row_index, col_index):
+                        self.biomes[row_index][col_index] = value
+                        self.container[value].append(coord)
+                        self.randomise_object('tree',coord)
+                    else:
+                        self.biomes[row_index][col_index] = self.nearby_water(grid, row_index, col_index)
+                        self.container[self.nearby_water(grid, row_index, col_index)].append(coord)
+                        
+    def randomise_object(self,object,coord):
+        chance = object_chance[object]
+        if r(chance[0],chance[1]) == 1:
+            self.container[object].append(coord)
+        
     def biome_output(self,temp,rainfall):
         if temp <= 10 and rainfall <= 10:
             return 'water'
-        elif 0<temp <=15 and 0<rainfall <= 15:
-            return 'rainforest'
-        elif 15<temp <=30 and 15<rainfall <= 30:
+        elif 12<temp <=20 and 12<rainfall <= 20:
             return 'forest'
-        elif 30<temp<=45 and 30<rainfall <= 45:
+        elif 16<temp <=30 and 16<rainfall <= 30:
+            return 'rainforest'
+        elif 22<temp<=40 and 22<rainfall <= 40:
             return 'savanna'
-        elif 45<temp<=100 and 45<rainfall <= 100:
-            return 'desert'
-        elif 45<temp<=50 and 0<rainfall <= 100:
+        elif 30<temp and 30<rainfall:
             return 'desert'
         else:
             return 'plains'
+        
+    def nearby_water(self, matrix, row_index, col_index):
+        code = [['.','.','.'],['.','_','.'],['.','.','.']]
+        for i in range(-1,2):
+            for j in range(-1, 2):
+                if not (i == 0 and j == 0) and not row_index + i < 0 and not col_index + j < 0:
+                    try:
+                        if matrix[row_index + i][col_index + j] == "water":
+                            code[i+1][j+1] = 'w'
+                    except IndexError:
+                        pass
+        for lst in code:
+            if 'w' in lst:
+                if str(code) in change_tile:
+                    return change_tile[str(code)]
+                else:
+                    return 'water'
+        return False
