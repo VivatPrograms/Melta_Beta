@@ -1,5 +1,5 @@
-import pygame
 from os import walk
+from Settings import *
 
 def import_sprite_sheet(path, size_of_one_frame=(64,64), transform=None):
     sheet = pygame.image.load(path).convert_alpha()

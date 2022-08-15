@@ -1,4 +1,4 @@
-
+import pygame
 #Settings for map
 grid_width = 50
 watermass = 1.5
@@ -64,17 +64,47 @@ monster_data = {
     'raccoon': {'health': 300,'exp':250,'damage':40,'attack_type': 'claw',  'attack_sound':'../audio/attack/claw.wav','speed': 2, 'resistance': 3, 'attack_radius': 120, 'notice_radius': 400},
     'spirit': {'health': 100,'exp':110,'damage':8,'attack_type': 'thunder', 'attack_sound':'../audio/attack/fireball.wav', 'speed': 4, 'resistance': 3, 'attack_radius': 60, 'notice_radius': 350},
     'bamboo': {'health': 70,'exp':120,'damage':6,'attack_type': 'leaf_attack', 'attack_sound':'../audio/attack/slash.wav', 'speed': 3, 'resistance': 3, 'attack_radius': 50, 'notice_radius': 300}}
-
+#Player
+player_data = {
+    'health' : 100,
+    'stamina' : 50,
+    'exp' : 50,
+    'speed' : 1,
+    'resistance' : 1,
+    'strength' : 1
+}
+player_max = {
+    'health' : 300,
+    'stamina' : 150,
+    'speed' : 1.5,
+    'resistance' : 3,
+    'strength' : 3
+}
+stats = {
+    0 : 'health',
+    1 : 'stamina',
+    2 : 'speed',
+    3 : 'resistance',
+    4 : 'strength'
+}
 growth_times = {
     'tree':100,
-    'rock':200,
-    'cactus':50
+    'rock':100,
+    'cactus':100,
+    'bush':100,
+    'white_flowers':100,
+    'yellow_flowers':100,
+    'red_flowers':100,
+    'blue_flowers':100,
+    'sunflower':100,
+    'black_crystal':100,
 }
+growth_time = 100
 object_path = '../graphics/objects'
 names = {'tree' : ['oak_tree','birch_tree',
-              'magical_tree','mystical_tree'],
+              'redwood_tree_1','redwood_tree_2'],
         'rock' : ['rock','small_rock'],
-        'cactus' : ['cactus_0','cactus_1','small_cactus_0','small_cactus_1']}
+        'cactus' : ['cactus_0','cactus_1']}
 water_dir = {
     -1: {-1:'topleft',
          0:'top',
@@ -89,18 +119,8 @@ object_chance = {
     'rock':(0,10),
     'cactus':(0,10)
 }
-object_offset = {
-    'birch_tree':(32,96),
-    'oak_tree':(32,96),
-    'magical_tree':(32,96),
-    'mystical_tree':(32,96),
-    'rock':(28,32),
-    'small_rock':(28,32),
-    'cactus_0':(8,32),
-    'cactus_1':(8,32),
-    'small_cactus_0':(2,6),
-    'small_cactus_1':(2,6)
-}
+
+block_positions = [(8,8),(32,12),(8,28),(32,32)]
 
 change_tile = {
     "[['w', '.', '.'], ['w', '_', '.'], ['w', '.', '.']]":'left',

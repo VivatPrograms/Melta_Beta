@@ -1,4 +1,5 @@
-import pygame,sys,time
+import sys,time
+from Settings import *
 from Main import *
 from debug import debug
 
@@ -17,12 +18,12 @@ class Game:
                     pygame.quit()
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    click = True
+                    click = event.button
             self.screen.fill('black')
             self.code.run(click)
             self.clock.tick(FPS)
             self.fps_counter = self.clock.get_fps()
-            debug(self.fps_counter)
+            # debug(self.fps_counter)
             pygame.display.update()
 
 if __name__ == '__main__':

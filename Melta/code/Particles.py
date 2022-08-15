@@ -1,7 +1,6 @@
-import pygame
 from Import_support import import_folder
 from random import choice
-
+from Settings import *
 class AnimationPlayer:
     def __init__(self):
         self.frames = {
