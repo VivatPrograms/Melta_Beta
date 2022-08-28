@@ -21,7 +21,7 @@ class UI:
         self.crafting_table = False
         self.change = False
         self.clicking = False
-        self.click_cooldown = 400
+        self.click_cooldown = 0.4
         self.upgrade_cost = 45
         self.selected_slot = [0,0]
         self.selected_crafting_slot = [0,0]

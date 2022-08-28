@@ -32,7 +32,7 @@ class Main:
         #click cooldown
         self.attacking = False
         self.attacked = False
-        self.click_cooldown = 400
+        self.click_cooldown = 0.4
         self.clicking_cooldown = None
         self.click_time = None
         self.clicking = False
@@ -261,6 +261,7 @@ class Main:
             if not self.object_collide:
                 if key[pygame.K_p]:
                     if not self.clicking:
+                        print('wtf')
                         self.clicking = True
                         self.click_time = perf_counter()
                         self.place_block(self.mouse_offset)
