@@ -11,7 +11,7 @@ trees = 'T'
 
 WIDTH = 1280
 HEIGHT = 720
-FPS = 60
+FPS = 165
 tile_size = 64
 #hitbox offset
 HITBOX_OFFSET = {
@@ -53,6 +53,13 @@ weapon_data = {
     'rapier':{'cooldown': 50, 'damage': 8, 'graphic':'../graphics/weapons/rapier/full.png'},
     'sai':{'cooldown': 80, 'damage': 10, 'graphic':'../graphics/weapons/sai/full.png'}}
 
+weapon_width = {
+    'sword':8
+}
+weapon_height = {
+    'sword':16
+}
+
 #Magic
 magic_data = {
     'flame':{'strength':5,'cost':20,'graphic':'../graphics/particles/flame/fire.png'},
@@ -60,7 +67,7 @@ magic_data = {
 
 #Enemies
 monster_data = {
-    'squid': {'health': 100,'exp':100,'damage':20,'attack_type': 'slash', 'attack_sound':'../audio/attack/slash.wav', 'speed': 3, 'resistance': 3, 'attack_radius': 80, 'notice_radius': 360},
+    'axolot': {'health': 100,'exp':100,'damage':20,'attack_type': 'Slash', 'attack_sound':'../audio/attack/slash.wav', 'speed': 64, 'resistance': 3, 'attack_radius': 80, 'notice_radius': 360},
     'raccoon': {'health': 300,'exp':250,'damage':40,'attack_type': 'claw',  'attack_sound':'../audio/attack/claw.wav','speed': 2, 'resistance': 3, 'attack_radius': 120, 'notice_radius': 400},
     'spirit': {'health': 100,'exp':110,'damage':8,'attack_type': 'thunder', 'attack_sound':'../audio/attack/fireball.wav', 'speed': 4, 'resistance': 3, 'attack_radius': 60, 'notice_radius': 350},
     'bamboo': {'health': 70,'exp':120,'damage':6,'attack_type': 'leaf_attack', 'attack_sound':'../audio/attack/slash.wav', 'speed': 3, 'resistance': 3, 'attack_radius': 50, 'notice_radius': 300}}
@@ -87,6 +94,12 @@ stats = {
     3 : 'resistance',
     4 : 'strength'
 }
+animation_index = {
+    'Down':0,
+    'Up':1,
+    'Left':2,
+    'Right':3
+}
 growth_times = {
     'tree':100,
     'rock':100,
@@ -99,7 +112,7 @@ growth_times = {
     'sunflower':100,
     'black_crystal':100,
 }
-growth_time = 100
+growth_time = 10
 object_path = '../graphics/objects'
 names = {'tree' : ['oak_tree','birch_tree',
               'redwood_tree_1','redwood_tree_2'],

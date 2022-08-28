@@ -2,6 +2,7 @@ from Settings import *
 from Crafting_recipes import *
 from Object import Object
 from Item import Item
+import copy
 
 class UI:
     def __init__(self,player,visible_sprites,interactables):
@@ -16,13 +17,15 @@ class UI:
         self.dragging = False
         self.dragging_item = None
         self.dragging_amount = None
-        self.open = False
+        self.main_menu = False
+        self.crafting_table = False
         self.change = False
         self.clicking = False
         self.click_cooldown = 400
         self.upgrade_cost = 45
         self.selected_slot = [0,0]
         self.selected_crafting_slot = [0,0]
+        self.selected_big_crafting_slot = [0,0]
         self.selected_output_slot = [0,0]
         self.bar = pygame.Surface((3*tile_size, tile_size))
         self.upgrade = pygame.Surface((tile_size,5*tile_size))
@@ -47,6 +50,12 @@ class UI:
                               1: {0: {'ID': None, 'amount': 0}, 1: {'ID': None, 'amount': 0}}}
         self.crafting_surf = pygame.Surface((2*tile_size,2*tile_size))
         self.crafting_rect = self.crafting_surf.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+        #crafting table
+        self.big_crafting_menu = {0: {0: {'ID': None, 'amount': 0}, 1: {'ID': None, 'amount': 0}, 2: {'ID': None, 'amount': 0}},
+                                1: {0: {'ID': None, 'amount': 0}, 1: {'ID': None, 'amount': 0}, 2: {'ID': None, 'amount': 0}},
+                                2: {0: {'ID': None, 'amount': 0}, 1: {'ID': None, 'amount': 0}, 2: {'ID': None, 'amount': 0}}}
+        self.big_crafting_surf = pygame.Surface((3*tile_size,3*tile_size))
+        self.big_crafting_rect = self.big_crafting_surf.get_rect(center=(WIDTH // 2, HEIGHT // 2 + tile_size//2))
         #crafting item
         self.output_menu = {0: {0: {'ID': None, 'amount': 0}}}
         self.output_surf = pygame.Surface((tile_size,tile_size))
@@ -54,6 +63,7 @@ class UI:
         #draw ui
         self.ui_update(self.inventory_surf,self.inventory_menu,True)
         self.ui_update(self.crafting_surf,self.crafting_menu,False)
+        self.ui_update(self.big_crafting_surf,self.big_crafting_menu,False)
         self.ui_update(self.output_surf,self.output_menu,False)
         self.display_all_upgrades()
 
@@ -76,10 +86,10 @@ class UI:
         self.drop()
         return False
     
-    def drop(self):
-        for y in self.crafting_menu.keys():
-            for x in self.crafting_menu[y].keys():
-                slot = self.crafting_menu[y][x]
+    def drop(self,menu):
+        for y in menu.keys():
+            for x in menu[y].keys():
+                slot = menu[y][x]
                 if slot['ID'] != None:
                     Item(slot['ID'], self.player.rect.topleft + self.player.facing_offset,[self.visible_sprites, self.interactables],
                         True if slot['ID'].type == 'seed' else False, 1)
@@ -111,29 +121,39 @@ class UI:
     def input(self,click):
         self.mouse_pos = pygame.mouse.get_pos()
         if click:
+            if self.main_menu:
+                if self.crafting_rect.collidepoint(self.mouse_pos):
+                    if click == 1:
+                        self.slot_input(self.crafting_menu,self.crafting_rect,[self.selected_crafting_slot],False)
+                    elif click == 3:
+                        self.slot_input(self.crafting_menu,self.crafting_rect,[self.selected_crafting_slot],True)
+                    self.change = True
+                elif self.output_rect.collidepoint(self.mouse_pos):
+                    self.slot_input(self.output_menu,self.output_rect,[self.selected_output_slot],True)
+                    self.change = True
+                elif self.upgrade_rect.collidepoint(self.mouse_pos):
+                    if click == 1:
+                        self.upgrade_input()
+            elif self.crafting_table:
+                if self.big_crafting_rect.collidepoint(self.mouse_pos):
+                    if click == 1:
+                        self.slot_input(self.big_crafting_menu,self.big_crafting_rect,[self.selected_crafting_slot],False)
+                    elif click == 3:
+                        self.slot_input(self.big_crafting_menu,self.big_crafting_rect,[self.selected_big_crafting_slot],True)
+                    self.change = True
+                elif self.output_rect.collidepoint(self.mouse_pos):
+                    self.slot_input(self.output_menu,self.output_rect,[self.selected_output_slot],True)
+                    self.change = True
+                elif self.upgrade_rect.collidepoint(self.mouse_pos):
+                    if click == 1:
+                        self.upgrade_input()
             if self.inventory_rect.collidepoint(self.mouse_pos):
                 if click == 1:
                     self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],False)
                 elif click == 3:
                     self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],True)
                 self.change = True
-            elif self.crafting_rect.collidepoint(self.mouse_pos):
-                if click == 1:
-                    self.slot_input(self.crafting_menu,self.crafting_rect,[self.selected_crafting_slot],False)
-                elif click == 3:
-                    self.slot_input(self.crafting_menu,self.crafting_rect,[self.selected_crafting_slot],True)
-                self.change = True
-            elif self.output_rect.collidepoint(self.mouse_pos):
-                self.slot_input(self.output_menu,self.output_rect,[self.selected_output_slot],True)
-                # if click == 1:
-                #     self.slot_input(self.output_menu,self.output_rect,[self.selected_output_slot],self.dragging_amount)
-                # elif click == 2:
-                #     self.slot_input(self.output_menu,self.output_rect,[self.selected_output_slot],self.dragging_amount//2)
-                self.change = True
-            elif self.upgrade_rect.collidepoint(self.mouse_pos):
-                if click == 1:
-                    self.upgrade_input()
-                
+
     def upgrade_input(self):
         for y in range(5):
             slot = pygame.Rect(pygame.math.Vector2(0 * tile_size, y * tile_size) + self.upgrade_rect.topleft,(tile_size, tile_size))
@@ -159,14 +179,14 @@ class UI:
                             if self.dragging_item['ID'] != None and self.output_menu[y][x]['ID'] != None:
                                 if self.dragging_item['ID'].name == self.output_menu[y][x]['ID'].name:
                                     self.dragging_amount += 1
-                                    self.crafting()
+                                    self.delete()
                     elif not self.dragging and menu[y][x]['ID'] != None:
                         self.dragging = True
                         self.dragging_item = menu[y][x].copy()
-                        self.get_amount(right_click)
+                        self.dragging_item['ID'].amount = self.get_amount(right_click)
                         self.remove(menu[y][x],self.dragging_amount)
                         if menu == self.output_menu:
-                            self.crafting()
+                            self.delete()
                     selected_slot[0][0] = x
                     selected_slot[0][1] = y
                     
@@ -178,11 +198,11 @@ class UI:
                 self.dragging_amount = self.dragging_item['amount']//2
             else:
                 self.dragging_amount = self.dragging_item['amount']
+        return self.dragging_amount
                     
-    def cooldowns(self):
-        current_time = pygame.time.get_ticks()
+    def cooldowns(self,time):
         if self.clicking:
-            if current_time - self.click_time >= self.click_cooldown:
+            if time - self.click_time >= self.click_cooldown:
                 self.clicking = False
 
     def drop_item(self,y,x,menu):
@@ -191,9 +211,16 @@ class UI:
                 if self.dragging_item['ID'].type == menu[y][x]['ID'].type:
                     menu[y][x]['amount'] += self.dragging_amount
                     self.kill_dragging()
+                else:
+                    if self.dragging_item['ID'].type == 'item_drop' and menu[y][x]['ID'].type == 'seed':
+                        menu[y][x]['ID'], self.dragging_item['ID'] = self.dragging_item['ID'], menu[y][x]['ID']
+                        menu[y][x]['amount'], self.dragging_amount = self.dragging_amount, menu[y][x]['amount']
+                    elif self.dragging_item['ID'].type == 'seed' and menu[y][x]['ID'].type == 'item_drop':
+                        menu[y][x]['ID'], self.dragging_item['ID'] = self.dragging_item['ID'], menu[y][x]['ID']
+                        menu[y][x]['amount'], self.dragging_amount = self.dragging_amount, menu[y][x]['amount']
             else:
                 menu[y][x]['ID'], self.dragging_item['ID'] = self.dragging_item['ID'], menu[y][x]['ID']
-                menu[y][x]['amount'], self.dragging_item['amount'] = self.dragging_item['amount'], menu[y][x]['amount']
+                menu[y][x]['amount'], self.dragging_amount = self.dragging_amount, menu[y][x]['amount']
         else:
             menu[y][x]['ID'] = self.dragging_item['ID']
             menu[y][x]['amount'] += self.dragging_amount
@@ -236,47 +263,100 @@ class UI:
                 self.output_surf.blit(img, (0, 0))
             pygame.draw.rect(self.output_surf, 'gold', pygame.Rect((0, 0), (tile_size, tile_size)), 2)
         
-    def crafting(self):
-        # if self.dragging_item == self.output_menu[y][x]
-        for y in self.crafting_menu.keys():
-            for x in self.crafting_menu[y].keys():
-                self.remove(self.crafting_menu[y][x],1)
-
-    def output(self):
-        for types in recipes.keys():
-            x_level = []
-            self.kill_loop = False
-            crafting = [[None,None],[None,None]]
+    def delete(self):
+        if self.main_menu:
             for y in self.crafting_menu.keys():
                 for x in self.crafting_menu[y].keys():
-                    if self.crafting_menu[y][x]['ID'] != None:
-                        if self.crafting_menu[y][x]['ID'].type != 'seed':
-                            crafting[y][x] = self.crafting_menu[y][x]['ID'].name
-                            x_level.append(x) 
-                    else:
-                        crafting[y][x] = None
+                    self.remove(self.crafting_menu[y][x],1)
+        elif self.crafting_table:
+            for y in self.big_crafting_menu.keys():
+                for x in self.big_crafting_menu[y].keys():
+                    self.remove(self.big_crafting_menu[y][x],1)
+
+    def outputs(self):
+        x_level = []
+        y_level = []
+        if self.main_menu:
+            crafting = [[None,None],[None,None]]
+            crafting = self.output(self.crafting_menu,x_level,y_level,crafting)
+            self.crafting(crafting,crafting[0]+crafting[1],3,x_level,y_level)
+        elif self.crafting_table:
+            crafting = [[None,None,None],[None,None,None],[None,None,None]]
+            crafting = self.output(self.big_crafting_menu,x_level,y_level,crafting)
+            self.crafting(crafting,crafting[0]+crafting[1]+crafting[2],8,x_level,y_level)
+
+    def crafting(self,crafting,lists,index,x_level,y_level):
+        for types in recipes.keys():
+            self.kill_loop = False
             for key in recipes[types].keys():
+                craft = crafting.copy()
                 if types == 0:
-                    lists = crafting[0]+crafting[1]
-                    if lists.count(recipes[types][key]) == 1 and lists.count(None) == 3: 
+                    if lists.count(recipes[types][key]) == 1 and lists.count(None) == index:
                         self.do_output(key)  
                         break
                     else:
                         self.dont_output() 
                 elif types == 1:
-                    if crafting == recipes[types][key] and x_level[0] == x_level[1]:
-                        self.do_output(key) 
-                        break
+                    for n in range(len(craft)):
+                        self.repeat_delete(craft)
+                    if [] in craft:
+                        craft.remove([])
+                    if craft == recipes[types][key] and x_level[0] == x_level[1]:
+                        if y_level[0] + 1 == y_level[1] or y_level[0] - 1 == y_level[1]: 
+                            self.do_output(key) 
+                            break
                     else:
                         self.dont_output() 
                 elif types == 2:
-                    if crafting == recipes[types][key]:
-                        self.do_output(key)    
-                        break
+                    for n in range(len(craft)):
+                        self.repeat_delete(craft)
+                    if [] in craft:
+                        craft.remove([])
+                    if craft == recipes[types][key] and y_level[0] == y_level[1]:
+                        if x_level[0] - 1 == x_level[1] or x_level[0] + 1 == x_level[1]: 
+                            self.do_output(key) 
+                            break
+                    else:
+                        self.dont_output() 
+                elif types == 3:
+                    for n in range(len(craft)):
+                        self.repeat_delete(craft)
+                    if [] in craft:
+                        craft.remove([])
+                    if craft == recipes[types][key]:
+                        if x_level[0] + x_level[1] == x_level[2] + x_level[3]:
+                            self.do_output(key) 
+                            break  
+                    else:
+                        self.dont_output() 
+                elif types == 4:
+                    if [] in craft:
+                        craft.remove([])
+                    if craft == recipes[types][key]:
+                        self.do_output(key) 
+                        break  
                     else:
                         self.dont_output() 
             if self.kill_loop:
                 break
+
+    def repeat_delete(self,craft):
+        for lst in craft:
+            for j in lst: 
+                if j == None:
+                    lst.remove(None)
+
+    def output(self,menu,x_,y_,crafting):
+        for y in menu.keys():
+            for x in menu[y].keys():
+                if menu[y][x]['ID'] != None:
+                    if menu[y][x]['ID'].type != 'seed':
+                        crafting[y][x] = menu[y][x]['ID'].name
+                        x_.append(x) 
+                        y_.append(y)
+                else:
+                    crafting[y][x] = None
+        return crafting
                     
     def dont_output(self):
         self.crafting_item = None
@@ -289,12 +369,13 @@ class UI:
         self.output_menu[0][0]['amount'] += 1   
         self.kill_loop = True
                     
-    def return_items(self):
-        for y in self.crafting_menu.keys():
-            for x in self.crafting_menu[y].keys():
-                if self.crafting_menu[y][x]['ID'] != None:
-                    self.add_item(self.crafting_menu[y][x]['ID'],self.crafting_menu[y][x]['amount'])
-                    self.remove(self.crafting_menu[y][x],self.crafting_menu[y][x]['amount'])
+    def return_items(self,menu):
+        self.dont_output()
+        for y in menu.keys():
+            for x in menu[y].keys():
+                if menu[y][x]['ID'] != None:
+                    self.add_item(menu[y][x]['ID'],menu[y][x]['amount'])
+                    self.remove(menu[y][x],menu[y][x]['amount'])
                     
     def display_all_stats(self):
         self.display_stats('health',self.current_health,self.health_rect,'red')
@@ -322,6 +403,22 @@ class UI:
         else:
             pos = pygame.math.Vector2(tile_size * len(str(self.current_exp // 50)) // len(str(self.current_exp // 50)), -4)
         return pos
+
+    def remove_stamina(self,amount):
+        self.current_stamina -= amount
+        if self.current_stamina <= 0:
+            self.current_stamina = 0
+
+    def remove_health(self,amount):
+        self.current_health -= amount
+        if self.current_health <= 0:
+            self.current_health = 0
+
+    def regain_hp_stamina(self,dt):
+        if self.current_health < player_data['health']:
+            self.current_health += player_data['health'] * 0.015 * dt
+        if self.current_stamina < player_data['stamina']:
+            self.current_stamina += player_data['stamina'] * 0.05 * dt
     
     def display_all_upgrades(self):
         self.display_upgrade('red',(0,tile_size*0))
@@ -337,25 +434,33 @@ class UI:
         if self.change:
             self.ui_update(self.inventory_surf,self.inventory_menu,True)
             self.ui_update(self.crafting_surf,self.crafting_menu,False)
-            self.output()
+            self.ui_update(self.big_crafting_surf,self.big_crafting_menu,False)
+            self.outputs()
             self.ui_update(self.output_surf,self.output_menu,False)
             self.change = False
         if self.dragging == True and self.dragging_item['ID'] != None:
+            txt = self.font.render(str(self.dragging_amount),True,'white')
             dragging_surface = pygame.Surface((tile_size,tile_size), pygame.SRCALPHA, 32).convert_alpha()
             dragging_surface.blit(self.dragging_item['ID'].image,(0,0))
+            dragging_surface.blit(txt,(font_offset,font_offset))
             self.display_surface.blit(dragging_surface,self.mouse_pos)
 
     def draw(self):
         self.display_all_stats()
         self.display_all_upgrades()
         self.display_surface.blit(self.inventory_surf, self.inventory_rect)
-        if self.open:
+        if self.main_menu:
             self.display_surface.blit(self.crafting_surf,self.crafting_rect)
             self.display_surface.blit(self.output_surf,self.output_rect)
             self.display_surface.blit(self.upgrade,self.upgrade_rect)
+        elif self.crafting_table:
+            self.display_surface.blit(self.big_crafting_surf,self.big_crafting_rect)
+            self.display_surface.blit(self.output_surf,self.output_rect)
+            self.display_surface.blit(self.upgrade,self.upgrade_rect)
 
-    def update(self,click):
-        self.cooldowns()
+    def update(self,click,time,dt):
+        self.cooldowns(time)
         self.input(click)
+        self.regain_hp_stamina(dt)
         self.draw()
         self.other()

@@ -33,7 +33,7 @@ class Ground:
                     self.image.blit(self.Tile_map[2],(0,0))
                     self.draw(mouse_offset)
 
-    def seeding_logic(self,ground,ui,mouse_pos,seed):
+    def seeding_logic(self,ground,ui,mouse_pos,seed,time):
         mouse_offset = mouse_pos//tile_size
         land = ground[mouse_offset[1]][mouse_offset[0]]
         if land['ground'] == 'plowed_ground':
@@ -44,12 +44,12 @@ class Ground:
                             if land['seed'] in recipe and seed in recipe:
                                 self.image.blit(self.Tile_map[2],(0,0))
                                 self.ground_changer(ground,mouse_offset,land['seeded_ground'],
-                                    item,randint(1,4),0,True)
+                                    item,randint(1,4),time,True)
                                 ui.remove(ui.inventory_menu[ui.selected_slot[1]][ui.selected_slot[0]],1)
                                 self.draw(mouse_offset)
                                 break
             else:
-                self.ground_changer(ground,mouse_offset,True,seed,randint(1,4),0,False)
+                self.ground_changer(ground,mouse_offset,True,seed,randint(1,4),time,False)
                 ui.remove(ui.inventory_menu[ui.selected_slot[1]][ui.selected_slot[0]],1)
                 self.draw(mouse_offset)
                 
@@ -57,44 +57,44 @@ class Ground:
         mouse_offset = mouse_pos//tile_size
         land = ground[mouse_offset[1]][mouse_offset[0]]
         if land['ground'] == 'plowed_ground' and land['seeded_ground']:
-            if land['growth_time'] == growth_time:
+            if self.all_time == growth_time:
                 self.randomise_tree(land,mouse_pos)
                 self.ground_changer(ground,mouse_offset,False,None,None,None,False)
                 self.image.blit(self.Tile_map[2],(0,0))
                 self.draw(mouse_offset)
                 
-    def show_info(self,ground,mouse_pos):
+    def show_info(self,ground,mouse_pos,time):
         mouse_offset = mouse_pos//tile_size
         land = ground[mouse_offset[1]][mouse_offset[0]]
         if land['growth_time'] != None:
-            self.time_left = growth_time - land['growth_time']
+            self.time_left = round(growth_time - self.all_time)
         else:
             self.time_left = None
                 
-    def ground_changer(self,ground,mouse_offset,seeded_ground,seed,amount,growth_time,mixed):
+    def ground_changer(self,ground,mouse_offset,seeded_ground,seed,amount,growing_time,mixed):
         ground[mouse_offset[1]][mouse_offset[0]]['seeded_ground'] = seeded_ground
         ground[mouse_offset[1]][mouse_offset[0]]['seed'] = seed
         ground[mouse_offset[1]][mouse_offset[0]]['amount'] = amount
-        ground[mouse_offset[1]][mouse_offset[0]]['growth_time'] = growth_time
+        ground[mouse_offset[1]][mouse_offset[0]]['growth_time'] = growing_time
         ground[mouse_offset[1]][mouse_offset[0]]['mixed'] = mixed
-                
+        if growing_time != None:
+            ground[mouse_offset[1]][mouse_offset[0]]['end_time'] = growing_time + growth_time
+
     def randomise_tree(self,land,pos):
         pos = pos // tile_size * tile_size
         if randint(0,1):
             Item(Object((0,0),None,land['seed']),(pos[0]+randint(-32,32),pos[1]+randint(-32,32)),[self.visible_sprites,self.interactables],True,1)
         Item(Object((0,0),None,land['seed']),(pos[0]+randint(-32,32),pos[1]+randint(-32,32)),[self.visible_sprites,self.interactables],False,land['amount'])
                 
-    def check_growth(self,ground,y,x):
-        if ground[y][x]['seeded_ground']:
-            if ground[y][x]['growth_time'] != None:
-                if ground[y][x]['growth_time'] >= 0 and ground[y][x]['growth_time'] < growth_time:
-                    ground[y][x]['growth_time'] += 1
-                else:
-                    ground[y][x]['growth_time'] = growth_time
+    def check_growth(self,ground,y,x,time):
+        if time - ground[y][x]['growth_time'] < growth_time:
+           self.all_time = time - ground[y][x]['growth_time']
+        else:
+            self.all_time = growth_time
 
-    def update_map(self,land,y,x):
+    def update_map(self,land,y,x,time):
         item = land['seed']
-        growth_index = land['growth_time'] / growth_time
+        growth_index = self.all_time / growth_time
         size = tile_size * growth_index
         pos = (tile_size-size) / 2 
         img = pygame.transform.scale(pygame.image.load(f'../graphics/objects/bush.png'),(size,size))
@@ -104,7 +104,7 @@ class Ground:
     def draw_plant(self,land,pos,y,x,img,item_img):
         self.image.blit(self.Tile_map[2],(0,0))
         self.image.blit(img,(pos,pos))
-        if land['growth_time'] == growth_time:
+        if self.all_time == growth_time:
             for i in range(land['amount']):
                 self.image.blit(item_img,block_positions[i])
         self.draw(pygame.math.Vector2(x,y))
@@ -129,6 +129,6 @@ class Ground:
             self.map.blit(pygame.image.load(f'../graphics/tiles/plains.png'),mouse_offset*tile_size)
             ground[mouse_offset[1]][mouse_offset[0]]['ground'] = 'plains'
         
-    def run(self,ground,y,x):
-        self.update_map(ground[y][x],y,x)
-        self.check_growth(ground,y,x)
+    def run(self,ground,y,x,time):
+        self.check_growth(ground,y,x,time)
+        self.update_map(ground[y][x],y,x,time)

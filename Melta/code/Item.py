@@ -6,8 +6,6 @@ class Item(pygame.sprite.Sprite):
             super().__init__(groups)
         else:
             super().__init__()
-        font = pygame.font.Font(None, 32)
-        text = font.render(str(amount), True, 'white')
         self.name = sprite.name
         self.amount = amount
         self.pos = pos
@@ -16,7 +14,6 @@ class Item(pygame.sprite.Sprite):
         self.seed_image = pygame.image.load(f'../graphics/seeds/seed.png')
         self.determine_type(seed,sprite)
         self.determine_type_before(sprite)
-        self.image.blit(text, (font_offset,font_offset))
         pygame.draw.rect(self.image, 'aqua', pygame.Rect((0, 0), (tile_size, tile_size)), 2)
         
     def determine_type(self,seed,sprite):

@@ -1,6 +1,8 @@
 from random import randint, choice
 from math import sin
+from time import perf_counter
 import copy
+from Enemy import Enemy
 from Settings import *
 from Object import Object
 from Item import Item
@@ -21,13 +23,15 @@ class Main:
         self.attack_sprites = pygame.sprite.Group()
         self.attackable_sprites = pygame.sprite.Group()
         self.interactables = pygame.sprite.Group()
-        self.player = Player((grid_width // 2 * tile_size, grid_width // 2 * tile_size), [self.visible_sprites], self.obstacle_sprites, self.create_attack, self.destroy_attack, self.create_magic)
+        self.player = Player((grid_width // 2 * tile_size, grid_width // 2 * tile_size), [self.visible_sprites], self.obstacle_sprites, self.create_attack, self.destroy_attack)
         self.animation_player = AnimationPlayer()
         self.perlin = PerlinNoise()
         self.ui = UI(self.player,self.visible_sprites,self.interactables)
         # self.magic_player = MagicPlayer(self.animation_player)
         self.Tile_map = import_sprite_sheet('../graphics/Tilemap.png')
         #click cooldown
+        self.attacking = False
+        self.attacked = False
         self.click_cooldown = 400
         self.clicking_cooldown = None
         self.click_time = None
@@ -43,14 +47,18 @@ class Main:
         self.generate_map()
         #ui
         self.pressed = False
+        self.font = pygame.font.Font(None, 32)
+        self.last_time = perf_counter()
         
     #Map creation/Object creation
     def generate_map(self):
+        self.coords = []
         self.perlin.generate_noise()
         self.grid = self.perlin.container
         self.map = pygame.Surface((tile_size * grid_width, tile_size * grid_width))
         for key in self.grid.keys():
             for coord in self.grid[key]:
+                self.coords.append(coord)
                 #general setup
                 rect = self.Tile_map[0].get_rect(topleft=(coord))
                 #obstacles/enemies
@@ -60,9 +68,6 @@ class Main:
                     self.object = Object(coord,[self.visible_sprites,self.obstacle_sprites,self.interactables],choice(names['tree']))
                 elif key == 'cactus':
                     self.object = Object(coord,[self.visible_sprites,self.obstacle_sprites,self.interactables],choice(names['cactus']))
-                # elif key == 'enemy':
-                #     Enemy('squid', coord, [self.visible_sprites, self.attackable_sprites], self.obstacle_sprites,
-                #           self.damage_player, self.trigger_death_particles, self.add_exp)
                 #biomes
                 if key == 'water':
                     self.map.blit(pygame.image.load('../graphics/tiles/water.png').convert_alpha(), rect)
@@ -106,21 +111,34 @@ class Main:
         for y in self.perlin.biomes:
             for x in self.perlin.biomes[y]:
                 self.ground[y][x] = {'ground':self.perlin.biomes[y][x],'seeded_ground':False,'seed':None,'growth_time':None,'mixed':False}
-
+        self.spawn_enemy()
     def map_update(self):
         self.map_rect = self.map.get_rect()
         self.map_pos = self.map_rect.topleft - self.offset
         self.offset.x = self.player.rect.centerx - WIDTH // 2
         self.offset.y = self.player.rect.centery - HEIGHT // 2
+
+    def spawn_enemy(self):
+        random_coord = choice(self.coords)
+        Enemy('axolot', random_coord, [self.visible_sprites, self.attackable_sprites], self.obstacle_sprites,
+                self.damage_player, self.trigger_death_particles, self.add_exp)
         
     # ---------------------------Map Interactables/Sprites-------------------------------
-    def input(self):
-        if not self.ui.open:
-            self.mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
-            self.mouse_offset = self.mouse_pos + self.offset
-            self.breaking = False
-            self.mouse_input()
-            self.farm_input()
+    def input(self,click):
+        self.key_input()
+        if not self.ui.main_menu:
+            if not self.ui.crafting_table:
+                self.allow_input(click)
+        elif not self.ui.crafting_table:
+            if not self.ui.main_menu:
+                self.allow_input(click)
+
+    def allow_input(self,click):
+        self.mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
+        self.mouse_offset = self.mouse_pos + self.offset
+        self.breaking = False
+        self.mouse_input(click)
+        self.farm_input()
             
     def farm_input(self):
         if pygame.mouse.get_pressed()[2] and not self.object_collide:
@@ -132,16 +150,18 @@ class Main:
         elif not pygame.mouse.get_pressed()[0] and not self.object_collide:
             self.tree_info()
             
-    def mouse_input(self):
+    def mouse_input(self,click):
         collisions = 0
         self.object_collide = False
         for sprite in self.interactables.sprites():
             if sprite.rect.collidepoint(self.mouse_offset):
                 collisions += 1
                 self.object_collide = True
+                if click == 3 and 'table' in sprite.name:
+                    self.ui.crafting_table = True
                 if pygame.mouse.get_pressed()[0]:
                     if sprite.type == 'block':
-                        self.hold_timer += 1 // collisions
+                        self.hold_timer += 40 // collisions * self.dt
                         self.breaking = True
                         self.break_block(sprite,self.hold_timer)
                         self.display_breaking(sprite,self.hold_timer,self.time_to_hold)
@@ -156,8 +176,11 @@ class Main:
         prev_sprite2 = None
         for sprite1 in self.interactables.sprites():
             if sprite1.type == 'item_drop' or sprite1.type == 'seed':
-                pos = (sprite1.pos[0],round(sin(pygame.time.get_ticks()//75) * 3)+sprite1.pos[1])
-                self.display_surface.blit(sprite1.image, pos)
+                img = sprite1.image.copy()
+                txt = self.font.render(str(sprite1.amount),True,'white')
+                pos = (sprite1.pos[0],round(sin(perf_counter())*5)+sprite1.pos[1])
+                img.blit(txt,(font_offset,font_offset))
+                self.display_surface.blit(img, pos)
                 for sprite2 in self.interactables.sprites():
                     if sprite1.type == sprite2.type and sprite1.name == sprite2.name:
                         if sprite1 != sprite2:
@@ -174,56 +197,64 @@ class Main:
             
     def seed_ground(self):
         self.ground_class.seeding_logic(self.ground,self.ui,self.mouse_offset,
-                                        self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].name)
+                                        self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].name,
+                                        self.current_time)
     def harvest(self):
         self.ground_class.harvest(self.ground,self.ui,self.mouse_offset)
     def tree_info(self):
-        self.ground_class.show_info(self.ground,self.mouse_offset)
+        self.ground_class.show_info(self.ground,self.mouse_offset,self.current_time)
         
     def key_input(self):
         key = pygame.key.get_pressed()
         if key[pygame.K_e]:
             if not self.pressed:
                 self.pressed = True
-                self.ui.open = not self.ui.open
-                if not self.ui.open:
-                    self.ui.return_items() 
+                if not self.ui.crafting_table:
+                    self.ui.main_menu = not self.ui.main_menu
+                    if not self.ui.main_menu:
+                        self.ui.return_items(self.ui.crafting_menu) 
+                else:
+                    self.ui.crafting_table = not self.ui.crafting_table
+                    if not self.ui.crafting_table:
+                        self.ui.return_items(self.ui.big_crafting_menu)
         else:
             self.pressed = False
-        if not self.ui.open:
+        for y in self.ground:
+            for x in self.ground[y]:
+                if self.ground[y][x]['seeded_ground']:
+                    self.ground_class.run(self.ground,y,x,self.current_time)
+        if not self.ui.main_menu:
             self.movement_input(key)
             self.other_input(key)
         else:
             self.player.direction.x = 0
             self.player.direction.y = 0
-        for y in self.ground:
-            for x in self.ground[y]:
-                if self.ground[y][x]['seeded_ground']:
-                    self.ground_class.run(self.ground,y,x)
                     
     def movement_input(self,key):
         if not self.player.attacking:
             #movement input
             if key[pygame.K_w]:
-                self.player.status = 'up'
+                self.player.status = 'Up_Walk'
                 self.player.direction.y = -1
             elif key[pygame.K_s]:
-                self.player.status = 'down'
+                self.player.status = 'Down_Walk'
                 self.player.direction.y = 1
             else:
                 self.player.direction.y = 0
             if key[pygame.K_a]:
-                self.player.status = 'left'
+                self.player.status = 'Left_Walk'
                 self.player.direction.x = -1
             elif key[pygame.K_d]:
-                self.player.status = 'right'
+                self.player.status = 'Right_Walk'
                 self.player.direction.x = 1
             else:
                 self.player.direction.x = 0
-            if key[pygame.K_w] and key[pygame.K_s]:
-                self.player.direction.y = 0
-            if key[pygame.K_a] and key[pygame.K_d]:
-                self.player.direction.x = 0
+            if key[pygame.K_SPACE]:
+                if not self.player.vulnerable and self.ui.current_stamina >= 12:
+                    self.ui.remove_stamina(12)
+                    self.player.attack_time = perf_counter()
+                    self.player.attacking = True
+                    self.create_attack()
                 
     def other_input(self,key):
         if self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'] != None:
@@ -231,23 +262,17 @@ class Main:
                 if key[pygame.K_p]:
                     if not self.clicking:
                         self.clicking = True
-                        self.click_time = pygame.time.get_ticks()
+                        self.click_time = perf_counter()
                         self.place_block(self.mouse_offset)
             if key[pygame.K_q]:
                 if not self.clicking:
                     self.clicking = True
-                    self.click_time = pygame.time.get_ticks()
+                    self.click_time = perf_counter()
                     self.drop_item()
-            #attack input
-            if key[pygame.K_SPACE]:
-                self.player.attacking = True
-                self.player.attack_time = pygame.time.get_ticks()
-                self.player.create_attack()
-                self.player.weapon_attack_sound.play()
         if key[pygame.K_i]:
             if not self.clicking and not self.object_collide:
                 self.clicking = True
-                self.click_time = pygame.time.get_ticks()
+                self.click_time = perf_counter()
                 self.ground_class.ground_logic(self.mouse_offset,self.ground,self.perlin.biomes)
 
     #Block logic
@@ -291,9 +316,8 @@ class Main:
         self.ui.remove_item(sprite,1)
     #More general stuff
     def cooldowns(self):
-        current_time = pygame.time.get_ticks()
         if self.clicking:
-            if current_time - self.click_time >= self.click_cooldown:
+            if self.current_time - self.click_time >= self.click_cooldown:
                 self.clicking = False
     def animations(self):
         if self.breaking:
@@ -306,10 +330,16 @@ class Main:
             txt_box = pygame.Surface((len(str(self.ground_class.time_left))*18,28))
             txt_box.blit(txt,(0,0))
             self.display_surface.blit(txt_box,self.mouse_pos-pygame.math.Vector2(0,32))
+
+    def create_dt(self):
+        self.current_time = perf_counter()
+        self.dt = self.current_time - self.last_time
+        if self.dt > 0.1:
+            self.dt = 0.1
+        self.last_time = self.current_time
                     
-    def update_sprites(self):
-        self.input()
-        self.key_input()
+    def update_sprites(self,click):
+        self.input(click)
         self.cooldowns()
 
     #---------------------------Player attack Logic-------------------------------
@@ -340,30 +370,41 @@ class Main:
                                 self.animation_player.create_grass_particles(pos - offset, [self.visible_sprites])
                             target_sprite.kill()
                         else:
-                            target_sprite.get_damage(self.player, attack_sprite.name)
+                            if not self.attacked:
+                                self.attacked = True
+                                target_sprite.get_damage(self.player, attack_sprite.name)
+                else:
+                    self.attacked = False
 
-    def damage_player(self, amount, attack_type):
-        if self.player.vulnerable:
-            self.player.health -= amount
-            self.player.vulnerable = False
-            self.player.hurt_time = pygame.time.get_ticks()
-            self.animation_player.create_particles(attack_type, self.player.rect.center, [self.visible_sprites])
+    def damage_player(self, amount, attack_type, pos, disable_attack):
+        disable_attack()
+        self.ui.remove_health(amount)
+        self.player.hurt_time = perf_counter()
+        self.animation_player.create_particles(attack_type, pos, [self.visible_sprites])
 
     def trigger_death_particles(self, pos, particle_type):
-        self.animation_player.create_particles(particle_type, pos, [self.visible_sprites])
+        self.animation_player.create_death_particles(pos,[self.visible_sprites])
 
     def add_exp(self, amount):
-        self.player.exp += amount
+        self.ui.current_exp += amount
+
+    def update_visible_sprites(self):
+        for sprite in self.visible_sprites:
+            if sprite.type != 'entity':
+                sprite.update()
+            else:
+                sprite.update(self.current_time,self.dt)
 
     def run(self,click):
+        self.create_dt()
         self.map_update()
-        self.update_sprites()
+        self.update_sprites(click)
         self.player_attack_update()
         self.display_surface.blit(self.map,self.map_pos)
         self.visible_sprites.draw(self.offset)
         self.visible_sprites.enemy_update(self.player)
-        self.visible_sprites.update()
-        self.ui.update(click)
+        self.update_visible_sprites()
+        self.ui.update(click,self.current_time,self.dt)
         self.merge_item()
         self.animations()
 
