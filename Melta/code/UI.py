@@ -1,3 +1,4 @@
+from multiprocessing import allow_connection_pickling
 from Settings import *
 from Crafting_recipes import *
 from Object import Object
@@ -124,42 +125,50 @@ class UI:
             if self.main_menu:
                 if self.crafting_rect.collidepoint(self.mouse_pos):
                     if click == 1:
-                        self.slot_input(self.crafting_menu,self.crafting_rect,[self.selected_crafting_slot],False)
+                        self.slot_input(self.crafting_menu,self.crafting_rect,[self.selected_crafting_slot],False,True)
                     elif click == 3:
-                        self.slot_input(self.crafting_menu,self.crafting_rect,[self.selected_crafting_slot],True)
+                        self.slot_input(self.crafting_menu,self.crafting_rect,[self.selected_crafting_slot],True,True)
                     self.change = True
                 elif self.output_rect.collidepoint(self.mouse_pos):
-                    self.slot_input(self.output_menu,self.output_rect,[self.selected_output_slot],True)
+                    self.slot_input(self.output_menu,self.output_rect,[self.selected_output_slot],True,True)
                     self.change = True
                 elif self.upgrade_rect.collidepoint(self.mouse_pos):
                     if click == 1:
                         self.upgrade_input()
                 elif self.inventory_rect.collidepoint(self.mouse_pos):
                     if click == 1:
-                        self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],False)
+                        self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],False,True)
                         self.change = True
                     elif click == 3:
-                        self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],True)
+                        self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],True,True)
                         self.change = True
             elif self.crafting_table:
                 if self.big_crafting_rect.collidepoint(self.mouse_pos):
                     if click == 1:
-                        self.slot_input(self.big_crafting_menu,self.big_crafting_rect,[self.selected_crafting_slot],False)
+                        self.slot_input(self.big_crafting_menu,self.big_crafting_rect,[self.selected_crafting_slot],False,True)
                     elif click == 3:
-                        self.slot_input(self.big_crafting_menu,self.big_crafting_rect,[self.selected_big_crafting_slot],True)
+                        self.slot_input(self.big_crafting_menu,self.big_crafting_rect,[self.selected_big_crafting_slot],True,True)
                     self.change = True
                 elif self.output_rect.collidepoint(self.mouse_pos):
-                    self.slot_input(self.output_menu,self.output_rect,[self.selected_output_slot],True)
+                    self.slot_input(self.output_menu,self.output_rect,[self.selected_output_slot],True,True)
                     self.change = True
                 elif self.upgrade_rect.collidepoint(self.mouse_pos):
                     if click == 1:
                         self.upgrade_input()
                 elif self.inventory_rect.collidepoint(self.mouse_pos):
                     if click == 1:
-                        self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],False)
+                        self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],False,True)
                         self.change = True
                     elif click == 3:
-                        self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],True)
+                        self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],True,True)
+                        self.change = True
+            else:
+                if self.inventory_rect.collidepoint(self.mouse_pos):
+                    if click == 1:
+                        self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],False,False)
+                        self.change = True
+                    elif click == 3:
+                        self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],True,False)
                         self.change = True
 
     def upgrade_input(self):
@@ -175,7 +184,7 @@ class UI:
                 player_data[stat] = player_data[stat] * 1.1
             self.current_exp -= self.upgrade_cost
 
-    def slot_input(self,menu,rect,selected_slot,right_click):
+    def slot_input(self,menu,rect,selected_slot,right_click,allow_drag):
         for y in menu.keys():
             for x in menu[y]:
                 slot = pygame.Rect(pygame.math.Vector2(x * tile_size, y * tile_size) + rect.topleft,(tile_size, tile_size))
@@ -184,19 +193,26 @@ class UI:
                         if not menu == self.output_menu:
                             self.drop_item(y,x,menu)
                         else:
-                            if self.dragging_item['ID'] != None and self.output_menu[y][x]['ID'] != None:
-                                if self.dragging_item['ID'].name == self.output_menu[y][x]['ID'].name:
-                                    self.dragging_amount += 1
-                                    self.delete()
+                            if allow_drag:
+                                if self.dragging_item['ID'] != None and self.output_menu[y][x]['ID'] != None:
+                                    if self.dragging_item['ID'].name == self.output_menu[y][x]['ID'].name:
+                                        self.dragging_amount += 1
+                                        self.delete()
                     elif not self.dragging and menu[y][x]['ID'] != None:
-                        self.dragging = True
-                        self.dragging_item = menu[y][x].copy()
-                        self.dragging_item['ID'].amount = self.get_amount(right_click)
-                        self.remove(menu[y][x],self.dragging_amount)
-                        if menu == self.output_menu:
-                            self.delete()
+                        if allow_drag:
+                            self.dragging = True
+                            self.dragging_item = menu[y][x].copy()
+                            self.dragging_item['ID'].amount = self.get_amount(right_click)
+                            self.remove(menu[y][x],self.dragging_amount)
+                            if menu == self.output_menu:
+                                self.delete()
                     selected_slot[0][0] = x
                     selected_slot[0][1] = y
+
+    def return_drag(self):
+        if self.dragging:
+            self.add_item(self.dragging_item['ID'],self.dragging_amount)
+            self.kill_dragging()
                     
     def get_amount(self,right_click):
         if not right_click:
@@ -206,7 +222,7 @@ class UI:
                 self.dragging_amount = self.dragging_item['amount']//2
             else:
                 self.dragging_amount = self.dragging_item['amount']
-        return self.dragging_amount
+        return self.dragging_item['amount']
                     
     def cooldowns(self,time):
         if self.clicking:

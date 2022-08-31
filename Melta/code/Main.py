@@ -187,6 +187,7 @@ class Main:
                     self.ui.main_menu = not self.ui.main_menu
                     if not self.ui.main_menu:
                         self.ui.return_items(self.ui.crafting_menu) 
+                        self.ui.return_drag()
                 else:
                     self.ui.crafting_table = not self.ui.crafting_table
                     if not self.ui.crafting_table:
