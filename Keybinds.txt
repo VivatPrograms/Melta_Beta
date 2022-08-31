@@ -1,0 +1,8 @@
+Press I to make a ground farmable/undo also
+Press Space to attack
+Press P to place blocks
+Press 1-9 to change inventory slot
+Press E to open crafting menu
+Mouse press on the inventory and crafting menu to drag and drop things where they need to be (Left click all items, right click half of the items)
+To put a seed on farmable ground, just select the slot the seed is located in and right click
+Mouse press when a plant is fully grown to harvest it's contents
