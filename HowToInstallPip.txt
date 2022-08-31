@@ -1,0 +1,6 @@
+To install pip, you have to go to this exact link on your browser >>> https://www.python.org/ftp/python/3.10.6/python-3.10.6-amd64.exe <<<
+or just search up python and download it from the website yourself (if the link is outdated or the python version is outdated, which at the time is not)
+It is a Python installation which you need for the game to work, then when you have it installed search Python, in the windows search
+and click the icon which reads as Python -Version here- (64-bit).
+Then in the terminal write pip install pygame and then pip install perlin.
+Thats it, now you can go back to HowToRun.txt and launch the game. I hope.

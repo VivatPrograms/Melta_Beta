@@ -1,1 +1,4 @@
-To run, pip install pygame and perlin, put Melta inside the folder of your Python's PATH, then go Melta > code > run.py <- run.py <- execute run.py to play the game!
+To run, pip install pygame and perlin, 
+(if you don't know how to do it, there is an another text file in this folder, CHECK IT OUT and then come back), 
+then in the game files go to Melta > code > run.py <- run.py <- double click run.py to play the game! 
+(run.py might be just run on your device, so just double click run)

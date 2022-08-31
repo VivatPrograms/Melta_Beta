@@ -5,9 +5,9 @@ from Entity import Entity
 from Import_support import *
 
 class Enemy(Entity):
-    def __init__(self,monster_name,pos,groups,obstacle_sprites,damage_player,trigger_death_particles,add_exp):
+    def __init__(self,monster_name,pos,groups,obstacle_sprites,damage_player,trigger_death_particles,add_exp,border):
         #general setup
-        super().__init__(groups,pos)
+        super().__init__(groups,pos,border)
         self.name = 'enemy'
         self.type = 'entity'
         #graphics setup
@@ -30,6 +30,7 @@ class Enemy(Entity):
         self.notice_radius = monster_info['notice_radius']
         self.attack_type = monster_info['attack_type']
         #player interaction
+        self.being_attacked = False
         self.attacking = False
         self.can_attack = True
         self.attack_time = None
@@ -139,6 +140,7 @@ class Enemy(Entity):
         self.health -= player.get_full_weapon_damage()
         self.hit_time = perf_counter()
         self.vulnerable = False
+        self.being_attacked = True
 
     def check_death(self):
         if self.health <= 0:
@@ -153,7 +155,7 @@ class Enemy(Entity):
             self.knockback(self.speed*3,dt)
 
     def update(self,time,dt):
-        self.move(self.speed*1.5,dt,True if 'Walk' in self.status else False,self.attacking)
+        self.move(self.speed*2,dt,True if 'Walk' in self.status else False,self.attacking)
         self.cooldowns(time)
         self.hit_reaction(dt)
         self.animate(dt)

@@ -1,12 +1,11 @@
-from msilib.schema import Directory
 from Settings import *
 from Import_support import *
 from Entity import Entity
 from time import perf_counter
 
 class Player(Entity):
-    def __init__(self,pos,groups,obstacle_sprites,create_attack,destroy_attack):
-        super().__init__(groups,pos)
+    def __init__(self,pos,groups,obstacle_sprites,create_attack,destroy_attack,border):
+        super().__init__(groups,pos,border)
         #general setup
         self.name = 'player'
         self.type = 'entity'
@@ -15,7 +14,7 @@ class Player(Entity):
         #sprite setup
         self.image = pygame.Surface((64,64))
         self.rect = self.image.get_rect(topleft = pos)
-        self.hitbox = self.rect.inflate(-16,-16)
+        self.hitbox = self.rect.inflate(-16,-24)
         #Functions
         self.obstacle_sprites = obstacle_sprites
         self.create_attack = create_attack
@@ -131,4 +130,4 @@ class Player(Entity):
         self.get_status()
         self.get_facing_offset()
         self.animate(dt)
-        self.move(player_data['speed']*128,dt)
+        self.move(player_data['speed']*150,dt)
