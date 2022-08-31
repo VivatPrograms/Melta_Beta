@@ -134,6 +134,13 @@ class UI:
                 elif self.upgrade_rect.collidepoint(self.mouse_pos):
                     if click == 1:
                         self.upgrade_input()
+                elif self.inventory_rect.collidepoint(self.mouse_pos):
+                    if click == 1:
+                        self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],False)
+                        self.change = True
+                    elif click == 3:
+                        self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],True)
+                        self.change = True
             elif self.crafting_table:
                 if self.big_crafting_rect.collidepoint(self.mouse_pos):
                     if click == 1:
@@ -147,12 +154,13 @@ class UI:
                 elif self.upgrade_rect.collidepoint(self.mouse_pos):
                     if click == 1:
                         self.upgrade_input()
-            if self.inventory_rect.collidepoint(self.mouse_pos):
-                if click == 1:
-                    self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],False)
-                elif click == 3:
-                    self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],True)
-                self.change = True
+                elif self.inventory_rect.collidepoint(self.mouse_pos):
+                    if click == 1:
+                        self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],False)
+                        self.change = True
+                    elif click == 3:
+                        self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],True)
+                        self.change = True
 
     def upgrade_input(self):
         for y in range(5):

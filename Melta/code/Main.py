@@ -271,9 +271,9 @@ class Main:
             self.hold_timer = 0
             self.breaking_pos = None
             offset = pygame.math.Vector2(randint(-64,64),randint(-64,64))
-            if randint(0,3) == 1:
+            if randint(0,2) == 1:
                 Item(sprite, sprite.rect.center+offset, [self.visible_sprites,self.interactables],False,1)
-            elif randint(0,3) == 2:
+            elif randint(0,2) == 2:
                 Item(sprite, sprite.rect.center+offset, [self.visible_sprites,self.interactables],True,1)
     def place_block(self,mouse_pos):
         mouse_offset = mouse_pos//tile_size
@@ -320,7 +320,7 @@ class Main:
             if sprite1.type == 'item_drop' or sprite1.type == 'seed':
                 img = sprite1.image.copy()
                 txt = self.font.render(str(sprite1.amount),True,'white')
-                pos = (sprite1.pos[0],round(sin(perf_counter())*5)+sprite1.pos[1])
+                pos = (sprite1.pos[0],round(sin(perf_counter()*8)*3)+sprite1.pos[1])
                 img.blit(txt,(font_offset,font_offset))
                 self.display_surface.blit(img, pos)
                 for sprite2 in self.interactables.sprites():
@@ -446,8 +446,8 @@ class YSortCameraGroup(pygame.sprite.Group):
         self.map_pos = self.map_rect.topleft - offset
         pygame.display.get_surface().blit(self.map, self.map_pos)
         for sprite in sorted(self.sprites(),key=lambda sprite: sprite.rect.centery):
+            sprite.pos = sprite.rect.topleft - offset
             if not sprite.type == 'item_drop' and not sprite.type == 'seed':
-                sprite.pos = sprite.rect.topleft - offset
                 pygame.display.get_surface().blit(sprite.image, sprite.pos)
 
     def enemy_update(self,player):
