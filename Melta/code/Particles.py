@@ -7,7 +7,7 @@ class AnimationPlayer:
             'Slash' : [],
         }
         for attack in self.frames.keys():
-            full_path =  f'../graphics/attacks/{attack}/SpriteSheet.png'
+            full_path =  f'../graphics/animations/attacks/{attack}/SpriteSheet.png'
             images = import_sprite_sheet(full_path,(32,32))
             for i in range(len(images)):
                 self.frames[attack].append(images[i])
@@ -24,7 +24,7 @@ class AnimationPlayer:
         ParticleEffect(pos,animation_frames,groups)
     
     def create_death_particles(self,pos,groups):
-        full_path = '../graphics/smokes/Smoke/SpriteSheet.png'
+        full_path = '../graphics/animations/smokes/Smoke/SpriteSheet.png'
         animation_frames = import_sprite_sheet(full_path,(32,32))
         ParticleEffect(pos,animation_frames,groups)
 

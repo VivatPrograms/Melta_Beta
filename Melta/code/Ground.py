@@ -57,7 +57,7 @@ class Ground:
         mouse_offset = mouse_pos//tile_size
         land = ground[mouse_offset[1]][mouse_offset[0]]
         if land['ground'] == 'plowed_ground' and land['seeded_ground']:
-            if self.all_time == growth_time:
+            if land['all_time'] == growth_time:
                 self.randomise_tree(land,mouse_pos)
                 self.ground_changer(ground,mouse_offset,False,None,None,None,False)
                 self.image.blit(self.Tile_map[2],(0,0))
@@ -67,7 +67,7 @@ class Ground:
         mouse_offset = mouse_pos//tile_size
         land = ground[mouse_offset[1]][mouse_offset[0]]
         if land['growth_time'] != None:
-            self.time_left = round(growth_time - self.all_time)
+            self.time_left = round(growth_time - land['all_time'])
         else:
             self.time_left = None
                 
@@ -79,6 +79,8 @@ class Ground:
         ground[mouse_offset[1]][mouse_offset[0]]['mixed'] = mixed
         if growing_time != None:
             ground[mouse_offset[1]][mouse_offset[0]]['end_time'] = growing_time + growth_time
+        else:
+            ground[mouse_offset[1]][mouse_offset[0]]['all_time'] = None
 
     def randomise_tree(self,land,pos):
         pos = pos // tile_size * tile_size
@@ -88,23 +90,23 @@ class Ground:
                 
     def check_growth(self,ground,y,x,time):
         if time - ground[y][x]['growth_time'] < growth_time:
-           self.all_time = time - ground[y][x]['growth_time']
+            ground[y][x]['all_time'] = time - ground[y][x]['growth_time']
         else:
-            self.all_time = growth_time
+            ground[y][x]['all_time'] = growth_time
 
     def update_map(self,land,y,x,time):
         item = land['seed']
-        growth_index = self.all_time / growth_time
+        growth_index = land['all_time'] / growth_time
         size = tile_size * growth_index
         pos = (tile_size-size) / 2 
-        img = pygame.transform.scale(pygame.image.load(f'../graphics/objects/bush.png'),(size,size))
-        item_img = pygame.transform.scale(pygame.image.load(f'../graphics/objects/{item}.png').subsurface(pygame.Rect((0,0),(tile_size,tile_size))),(22,22))
+        img = pygame.transform.scale(pygame.image.load(f'../graphics/items/placeables/objects/bush.png'),(size,size))
+        item_img = pygame.transform.scale(pygame.image.load(f'../graphics/items/placeables/objects/{item}.png').subsurface(pygame.Rect((0,0),(tile_size,tile_size))),(22,22))
         self.draw_plant(land,pos,y,x,img,item_img)
         
     def draw_plant(self,land,pos,y,x,img,item_img):
         self.image.blit(self.Tile_map[2],(0,0))
         self.image.blit(img,(pos,pos))
-        if self.all_time == growth_time:
+        if land['all_time'] == growth_time:
             for i in range(land['amount']):
                 self.image.blit(item_img,block_positions[i])
         self.draw(pygame.math.Vector2(x,y))

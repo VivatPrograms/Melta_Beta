@@ -68,6 +68,12 @@ class UI:
         self.ui_update(self.output_surf,self.output_menu,False)
         self.display_all_upgrades()
 
+    def check_item(self,slot,names):
+        for name in names:
+            if name in slot['ID'].name:
+                return True
+            return False
+
     def add_item(self, ID, amount):
         self.change = True
         for y in self.inventory_menu.keys():
@@ -302,67 +308,66 @@ class UI:
         y_level = []
         if self.main_menu:
             crafting = [[None,None],[None,None]]
-            crafting = self.output(self.crafting_menu,x_level,y_level,crafting)
-            self.crafting(crafting,crafting[0]+crafting[1],3,x_level,y_level)
+            crafting2 = [[None,None],[None,None]]
+            self.output(self.crafting_menu,x_level,y_level,crafting,crafting2)
+            self.crafting(crafting,crafting2,crafting[0]+crafting[1],3,x_level,y_level)
         elif self.crafting_table:
             crafting = [[None,None,None],[None,None,None],[None,None,None]]
-            crafting = self.output(self.big_crafting_menu,x_level,y_level,crafting)
-            self.crafting(crafting,crafting[0]+crafting[1]+crafting[2],8,x_level,y_level)
+            crafting2 = [[None,None,None],[None,None,None],[None,None,None]]
+            self.output(self.big_crafting_menu,x_level,y_level,crafting,crafting2)
+            self.crafting(crafting,crafting2,crafting[0]+crafting[1]+crafting[2],8,x_level,y_level)
 
-    def crafting(self,crafting,lists,index,x_level,y_level):
+    def crafting(self,crafting,crafting2,lists,index,x_level,y_level):
         for types in recipes.keys():
             self.kill_loop = False
             for key in recipes[types].keys():
                 craft = crafting.copy()
-                if types == 0:
-                    if lists.count(recipes[types][key]) == 1 and lists.count(None) == index:
-                        self.do_output(key)  
-                        break
-                    else:
-                        self.dont_output() 
-                elif types == 1:
-                    for n in range(len(craft)):
-                        self.repeat_delete(craft)
-                    if [] in craft:
-                        craft.remove([])
-                    if craft == recipes[types][key] and x_level[0] == x_level[1]:
-                        if y_level[0] + 1 == y_level[1] or y_level[0] - 1 == y_level[1]: 
-                            self.do_output(key) 
+                craft = self.get_craft(craft)
+                for recipe in recipes[types][key]:
+                    if types == 0:
+                        if lists.count(recipe) == 1 and lists.count(None) == index:
+                            self.do_output(key)  
                             break
-                    else:
-                        self.dont_output() 
-                elif types == 2:
-                    for n in range(len(craft)):
-                        self.repeat_delete(craft)
-                    if [] in craft:
-                        craft.remove([])
-                    if craft == recipes[types][key] and y_level[0] == y_level[1]:
-                        if x_level[0] - 1 == x_level[1] or x_level[0] + 1 == x_level[1]: 
-                            self.do_output(key) 
-                            break
-                    else:
-                        self.dont_output() 
-                elif types == 3:
-                    for n in range(len(craft)):
-                        self.repeat_delete(craft)
-                    if [] in craft:
-                        craft.remove([])
-                    if craft == recipes[types][key]:
-                        if x_level[0] + x_level[1] == x_level[2] + x_level[3]:
+                        else:
+                            self.dont_output() 
+                    elif types == 1:
+                        if craft == recipe and x_level[0] == x_level[1]:
+                            if y_level[0] + 1 == y_level[1] or y_level[0] - 1 == y_level[1]: 
+                                self.do_output(key) 
+                                break
+                        else:
+                            self.dont_output() 
+                    elif types == 2:
+                        if craft == recipe and y_level[0] == y_level[1]:
+                            if x_level[0] - 1 == x_level[1] or x_level[0] + 1 == x_level[1]: 
+                                self.do_output(key) 
+                                break
+                        else:
+                            self.dont_output() 
+                    elif types == 3:
+                        if craft == recipe:
+                            if x_level[0] + x_level[1] == x_level[2] + x_level[3]:
+                                self.do_output(key) 
+                                break  
+                        else:
+                            self.dont_output() 
+                    elif types == 4:
+                        if crafting2 == recipe:
                             self.do_output(key) 
                             break  
-                    else:
-                        self.dont_output() 
-                elif types == 4:
-                    if [] in craft:
-                        craft.remove([])
-                    if craft == recipes[types][key]:
-                        self.do_output(key) 
-                        break  
-                    else:
-                        self.dont_output() 
+                        else:
+                            self.dont_output() 
+                if self.kill_loop:
+                    break
             if self.kill_loop:
                 break
+
+    def get_craft(self,craft):
+        for n in range(len(craft)):
+            self.repeat_delete(craft)
+        if [] in craft:
+            craft.remove([])
+        return craft
 
     def repeat_delete(self,craft):
         for lst in craft:
@@ -370,16 +375,18 @@ class UI:
                 if j == None:
                     lst.remove(None)
 
-    def output(self,menu,x_,y_,crafting):
+    def output(self,menu,x_,y_,crafting,crafting2):
         for y in menu.keys():
             for x in menu[y].keys():
                 if menu[y][x]['ID'] != None:
                     if menu[y][x]['ID'].type != 'seed':
                         crafting[y][x] = menu[y][x]['ID'].name
+                        crafting2[y][x] = menu[y][x]['ID'].name
                         x_.append(x) 
                         y_.append(y)
                 else:
                     crafting[y][x] = None
+                    crafting2[y][x] = None
         return crafting
                     
     def dont_output(self):
@@ -390,8 +397,8 @@ class UI:
     def do_output(self,key):
         self.crafting_item = Item(Object((0,0),None,key),(0,0),None,False,1)
         self.output_menu[0][0]['ID'] = self.crafting_item 
-        self.output_menu[0][0]['amount'] += 1   
-        self.kill_loop = True
+        self.output_menu[0][0]['amount'] += 1 
+        self.kill_loop = True  
                     
     def return_items(self,menu):
         self.dont_output()

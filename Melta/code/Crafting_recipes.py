@@ -1,26 +1,72 @@
 recipes = {
-    0 : {'stone' : 'rock',
-            'stone' : 'small_rock',
-            'oak_wood' : 'oak_tree',
-            'birch_wood' : 'birch_tree',
-            'redwood_wood' : 'redwood_tree_1',
-            'redwood_wood' : 'redwood_tree_2',},
-    1: {'dagger' : [['black_crystal'],['stick']],
-        'stone' : [['oak_wood'],['oak_wood']]},
-    2 : {'oak_table' : [['oak_table_small','oak_table_small']],
-    'birch_table' : [['birch_table_small','birch_table_small']],
-    'redwood_table' : [['redwood_table_small','redwood_table_small']]},
-    3 : {'oak_table_small' : [['oak_wood','oak_wood'],['oak_wood','oak_wood']],
-        'birch_table_small' : [['birch_wood','birch_wood'],['birch_wood','birch_wood']],
-        'redwood_table_small' : [['redwood_tree_2','redwood_tree_2'],['redwood_tree_2','redwood_tree_2']]},
-    4 : {'spear':[['white_crystal'],[None,'stick',None],[None,None,'stick']],}
+    0 : {'stone' : ['rock'],
+            'stone' : ['small_rock'],
+            'oak_wood' : ['oak_tree'],
+            'birch_wood' : ['birch_tree'],
+            'redwood_wood' : ['redwood_tree_1',
+            'redwood_tree_2']},
+    1: {'black_sword_1' : [[['black_crystal'],['stick']]],
+    'blue_sword_1' : [[['blue_crystal'],['stick']]],
+    'white_sword_1' : [[['white_crystal'],['stick']]],
+    'pink_sword_1' : [[['pink_crystal'],['stick']]],
+    'aqua_sword_1' : [[['aqua_crystal'],['stick']]],
+    'mystical_sword_1' : [[['mystical_crystal'],['stick']]],
+    'stick' : [[['oak_wood'],['oak_wood']]]},
+    2 : {'oak_table' : [[['oak_table_small','oak_table_small']]],
+    'birch_table' : [[['birch_table_small','birch_table_small']]],
+    'redwood_table' : [[['redwood_table_small','redwood_table_small']]]},
+    3 : {'oak_table_small' : [[['oak_wood','oak_wood'],['oak_wood','oak_wood']]],
+        'birch_table_small' : [[['birch_wood','birch_wood'],['birch_wood','birch_wood']]],
+        'redwood_table_small' : [[['redwood_tree_2','redwood_tree_2'],['redwood_tree_2','redwood_tree_2']],
+        [['redwood_tree_1','redwood_tree_1'],['redwood_tree_1','redwood_tree_1']]]},
+    4 : {'aqua_lance_1':[[[None,None,'aqua_crystal'],[None,'stick',None],['stick',None,None]]],
+    'blue_lance_1':[[[None,None,'blue_crystal'],[None,'stick',None],['stick',None,None]]],
+    'black_lance_1':[[[None,None,'black_crystal'],[None,'stick',None],['stick',None,None]]],
+    'mystical_lance_1':[[[None,None,'mystical_crystal'],[None,'stick',None],['stick',None,None]]],
+    'pink_lance_1':[[[None,None,'pink_crystal'],[None,'stick',None],['stick',None,None]]],
+    'white_lance_1':[[[None,None,'white_crystal'],[None,'stick',None],['stick',None,None]]],
+    'aqua_pickaxe':[[['aqua_crystal','aqua_crystal','aqua_crystal'],[None,'stick',None],[None,'stick',None]]],
+    'blue_pickaxe':[[['blue_crystal','blue_crystal','blue_crystal'],[None,'stick',None],[None,'stick',None]]],
+    'black_pickaxe':[[['black_crystal','black_crystal','black_crystal'],[None,'stick',None],[None,'stick',None]]],
+    'mystical_pickaxe':[[['mystical_crystal','mystical_crystal','mystical_crystal'],[None,'stick',None],[None,'stick',None]]],
+    'pink_pickaxe':[[['pink_crystal','pink_crystal','pink_crystal'],[None,'stick',None],[None,'stick',None]]],
+    'white_pickaxe':[[['white_crystal','white_crystal','white_crystal'],[None,'stick',None],[None,'stick',None]]],
+    'aqua_axe':[[['aqua_crystal','aqua_crystal',None],['aqua_crystal','stick',None],[None,'stick',None]],
+                [[None,'aqua_crystal','aqua_crystal'],[None,'stick','aqua_crystal'],[None,'stick',None]]],
+    'black_axe':[[['black_crystal','black_crystal',None],['black_crystal','stick',None],[None,'stick',None]],
+                [[None,'black_crystal','black_crystal'],[None,'stick','black_crystal'],[None,'stick',None]]],
+    'blue_axe':[[['blue_crystal','blue_crystal',None],['blue_crystal','stick',None],[None,'stick',None]],
+                [[None,'blue_crystal','blue_crystal'],[None,'stick','blue_crystal'],[None,'stick',None]]],
+    'mystical_axe':[[['mystical_crystal','mystical_crystal',None],['mystical_crystal','stick',None],[None,'stick',None]],
+                [[None,'mystical_crystal','mystical_crystal'],[None,'stick','mystical_crystal'],[None,'stick',None]]],
+    'pink_axe':[[['pink_crystal','pink_crystal',None],['pink_crystal','stick',None],[None,'stick',None]],
+                [[None,'aqua_crystal','aqua_crystal'],[None,'stick','aqua_crystal'],[None,'stick',None]]],
+    'white_axe':[[['white_crystal','white_crystal',None],['white_crystal','stick',None],[None,'stick',None]],
+                [[None,'white_crystal','white_crystal'],[None,'stick','white_crystal'],[None,'stick',None]]],
+    'aqua_hoe':[[['aqua_crystal','aqua_crystal',None],[None,'stick',None],[None,'stick',None]],
+                [[None,'aqua_crystal','aqua_crystal'],[None,'stick',None],[None,'stick',None]]],
+    'black_hoe':[[['black_crystal','black_crystal',None],[None,'stick',None],[None,'stick',None]],
+                [[None,'black_crystal','black_crystal'],[None,'stick',None],[None,'stick',None]]],
+    'blue_hoe':[[['blue_crystal','blue_crystal',None],[None,'stick',None],[None,'stick',None]],
+                [[None,'blue_crystal','blue_crystal'],[None,'stick',None],[None,'stick',None]]],
+    'mystical_hoe':[[['mystical_crystal','mystical_crystal',None],[None,'stick',None],[None,'stick',None]],
+                [[None,'mystical_crystal','mystical_crystal'],[None,'stick',None],[None,'stick',None]]],
+    'pink_hoe':[[['pink_crystal','pink_crystal',None],[None,'stick',None],[None,'stick',None]],
+                [[None,'aqua_crystal','aqua_crystal'],[None,'stick',None],[None,'stick',None]]],
+    'white_hoe':[[['white_crystal','white_crystal',None],[None,'stick',None],[None,'stick',None]],
+                [[None,'white_crystal','white_crystal'],[None,'stick',None],[None,'stick',None]]],}
 }
+
 
 tree_recipes = {
     'bush' : [['oak_tree','rock'],
               ['birch_tree','rock'],
               ['redwood_tree_1','rock'],
-              ['redwood_tree_2','rock']],
+              ['redwood_tree_2','rock'],
+              ['oak_tree','rock'],
+              ['birch_tree','rock'],
+              ['redwood_tree_1','rock'],
+              ['redwood_tree_2','rock'],],
     'white_flowers' : [['birch_tree','bush']],
     'yellow_flowers' : [['oak_tree','bush']],                              
     'red_flowers' : [['redwood_tree_1','bush']],
@@ -73,18 +119,4 @@ tree_recipes = {
     'redwood_wardrobe' : [['redwood_wardrobe_small','redwood_bookshelf']],
     'pink_crystal' : [['aqua_crystal','sunflower']],
 
-}
-
-recipes_type_0 = {
-    'tree' : 'tree'
-}
-
-recipes_type_1 = {
-    'rock' : [['tree'],['tree']]
-}
-
-recipes_type_2 = {
-    'oak_table' : [['oak_wood','oak_wood'],['oak_wood','oak_wood']],
-    'birch_table' : [['birch_wood','birch_wood'],['birch_wood','birch_wood']],
-    'redwood_table' : [['redwood_wood','redwood_wood'],['redwood_wood','redwood_wood']]
 }

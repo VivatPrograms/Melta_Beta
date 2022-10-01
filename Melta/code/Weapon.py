@@ -7,7 +7,7 @@ class Weapon(pygame.sprite.Sprite):
         self.type = self.name
         direction = player.status.split('_')[0]
         #graphic
-        fullpath = f'../graphics/weapons/{player.weapon}/SpriteInHand.png'
+        fullpath = f'../graphics/items/unplaceables/tools/weapons/SpriteInHand/{player.weapon}.png'
         self.image = pygame.image.load(fullpath).convert_alpha()
         self.image = pygame.transform.scale(self.image,(self.image.get_width()*3,self.image.get_height()*3))
         #placement

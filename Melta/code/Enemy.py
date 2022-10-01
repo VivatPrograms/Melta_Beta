@@ -51,7 +51,7 @@ class Enemy(Entity):
         self.attack_sound.set_volume(0.1)
 
     def import_enemy_assets(self,name):
-        character_path = f'../graphics/enemies/{name}'
+        character_path = f'../graphics/entities/enemies/{name}'
         self.animations = {'Down':{'Idle':[],'Walk':[]},
                             'Up':{'Idle':[],'Walk':[]},
                             'Left':{'Idle':[],'Walk':[]},

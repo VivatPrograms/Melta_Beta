@@ -10,11 +10,21 @@ class Item(pygame.sprite.Sprite):
         self.amount = amount
         self.pos = pos
         self.seed = seed
-        self.image = pygame.image.load(f'../graphics/objects/{self.name}.png')
-        self.seed_image = pygame.image.load(f'../graphics/seeds/seed.png')
+        self.folder = self.get_folder_and_image()
+        self.seed_image = pygame.image.load(f'../graphics/items/placeables/seeds/seed.png')
         self.determine_type(seed,sprite)
         self.determine_type_before(sprite)
         pygame.draw.rect(self.image, 'aqua', pygame.Rect((0, 0), (tile_size, tile_size)), 2)
+
+    def get_folder_and_image(self):
+        try:
+            folder = 'unplaceables'
+            self.image = pygame.transform.scale(pygame.image.load(f'{paths[self.name]}/{self.name}.png'),
+            (tile_size,tile_size))
+        except KeyError:
+            folder = 'placeables'
+            self.image = pygame.image.load(f'../graphics/items/placeables/objects/{self.name}.png')
+        return folder
         
     def determine_type(self,seed,sprite):
         if seed: 

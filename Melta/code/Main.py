@@ -1,3 +1,4 @@
+from code import interact
 from random import randint, choice
 from math import sin
 from time import perf_counter
@@ -22,7 +23,6 @@ class Main:
         self.map_rect = self.map.get_rect()
         self.offset_limit = pygame.math.Vector2(self.map_rect.width - WIDTH,self.map_rect.height - HEIGHT)
         self.border = pygame.math.Vector2(self.map_rect.width-tile_size,self.map_rect.height-tile_size)
-        print(self.offset_limit)
         #import classes
         self.visible_sprites = YSortCameraGroup(self.map,self.map_rect,self.offset_limit)
         self.obstacle_sprites = pygame.sprite.Group()
@@ -47,9 +47,6 @@ class Main:
         self.object_collide = False
         #breaking
         self.time_to_hold = 100
-        self.hold_timer = 0
-        self.breaking = False
-        self.breaking_surf = pygame.Surface((86,22))
         #map
         self.generate_map()
         #ui
@@ -57,6 +54,9 @@ class Main:
         self.pressed = False
         self.font = pygame.font.Font(None, 32)
         self.last_time = perf_counter()
+        self.ui.add_item(Item(Object((0,0),None,'black_pickaxe'),(0,0),None,False,1),64)
+        self.ui.add_item(Item(Object((0,0),None,'black_axe'),(0,0),None,False,1),64)
+        self.ui.add_item(Item(Object((0,0),None,'oak_table_small'),(0,0),None,False,1),64)
         
     #Map creation/Object creation
     def generate_map(self):
@@ -117,7 +117,8 @@ class Main:
         self.ground_class = Ground(self.map,self.Tile_map,self.ground,self.visible_sprites,self.interactables)
         for y in self.perlin.biomes:
             for x in self.perlin.biomes[y]:
-                self.ground[y][x] = {'ground':self.perlin.biomes[y][x],'seeded_ground':False,'seed':None,'growth_time':None,'mixed':False}
+                self.ground[y][x] = {'ground':self.perlin.biomes[y][x],'seeded_ground':False,'seed':None,
+                'growth_time':None,'end_time':None,'all_time':None,'mixed':False}
         self.spawn_enemy(10)
 
     def spawn_enemy(self,times):
@@ -143,30 +144,30 @@ class Main:
     def allow_input(self,click):
         self.mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
         self.mouse_offset = self.mouse_pos + self.offset
-        self.breaking = False
         self.mouse_input(click)
         self.farm_input()
 
     def mouse_input(self,click):
-        collisions = 0
         self.object_collide = False
+        all_breaking = []
         for sprite in self.interactables.sprites():
-            if sprite.rect.collidepoint(self.mouse_offset):
-                collisions += 1
-                self.object_collide = True
-                if click == 3 and 'table' in sprite.name:
-                    self.ui.crafting_table = True
-                if pygame.mouse.get_pressed()[0]:
-                    if sprite.type == 'block':
-                        self.hold_timer += 40 // collisions * self.dt
-                        self.breaking = True
-                        self.break_block(sprite,self.hold_timer)
-                        self.display_breaking(sprite,self.hold_timer,self.time_to_hold)
+            if self.available_to_break(sprite):
+                if sprite.rect.collidepoint(self.mouse_offset):
+                    self.object_collide = True
+                    if click == 3 and 'table' in sprite.name:
+                        self.ui.crafting_table = True
+                    if pygame.mouse.get_pressed()[0]:
+                        if sprite.type == 'block':
+                            all_breaking.append(sprite)
+                            self.breaking_process(sprite,all_breaking)
+                        else:
+                            self.collect_item(sprite)
                     else:
-                        self.collect_item(sprite)
+                        sprite.being_damaged = False
+                        sprite.damage_received = 0
                 else:
-                    self.breaking = False
-                    self.hold_timer = 0
+                    sprite.being_damaged = False
+                    sprite.damage_received = 0
             
     def farm_input(self):
         if pygame.mouse.get_pressed()[2] and not self.object_collide:
@@ -226,10 +227,13 @@ class Main:
                 self.player.direction.x = 0
             if key[pygame.K_SPACE]:
                 if not self.player.vulnerable and self.ui.current_stamina >= 12:
-                    self.ui.remove_stamina(12)
-                    self.player.attack_time = perf_counter()
-                    self.player.attacking = True
-                    self.create_attack()
+                    if self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'] != None:
+                        if self.ui.check_item(self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]],['sword','lance']):
+                            self.player.weapon = self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].name
+                            self.ui.remove_stamina(12)
+                            self.player.attack_time = perf_counter()
+                            self.player.attacking = True
+                            self.create_attack()
                 
     def keys_input(self,key):
         if self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'] != None:
@@ -266,10 +270,36 @@ class Main:
         self.ground_class.show_info(self.ground,self.mouse_offset,self.current_time)
         
     #----------------------------------Block logic-----------------------------------
-    def break_block(self,sprite,hold_timer):
-        if hold_timer >= self.time_to_hold:
+    def available_to_break(self,sprite):
+        breakable_distance = tile_size*3
+        sprite_vector = pygame.math.Vector2(sprite.rect.center)
+        player_vector = pygame.math.Vector2(self.player.rect.center)
+        distance = (player_vector-sprite_vector).magnitude()
+        if distance <= breakable_distance:
+            return True
+        sprite.being_damaged = False
+        sprite.damage_received = 0
+        return False
+    def breaking_process(self,sprite,all_breaking):
+        for break_sprite in all_breaking:
+            if break_sprite == all_breaking[0]:
+                self.block = sprite
+                sprite.being_damaged = True
+                sprite.damage_received += self.deal_breaking_damage(20,self.dt,sprite)
+            else:
+                sprite.being_damaged = False
+                sprite.damage_received = 0
+        self.break_block(sprite)
+        self.draw_breaking(sprite,self.time_to_hold)
+    def breaking_speed(self,sprite):
+        for types in ['oak','birch','redwood']:
+            if types in sprite.name:
+                sprite.damage_received += self.deal_damage(20 * self.dt)
+                break
+    def break_block(self,sprite):
+        if sprite.damage_received >= self.time_to_hold:
             sprite.kill()
-            self.hold_timer = 0
+            sprite.damage_received = 0
             self.breaking_pos = None
             offset = pygame.math.Vector2(randint(-64,64),randint(-64,64))
             if randint(0,2) == 1:
@@ -282,19 +312,33 @@ class Main:
         biome = self.perlin.biomes[mouse_offset[1]][mouse_offset[0]]
         if not self.ground_class.beach_check(biome):
             if biome != 'water' and not land['ground'] == 'plowed_ground':
-                if self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].type_before == 'block' and self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].type == 'item_drop':
-                    Object(mouse_offset*tile_size, [self.visible_sprites,self.obstacle_sprites,self.interactables], self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].name)
-                    self.remove_item(self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'])
-    def display_breaking(self,sprite,hold_time,max_time):
-        self.under_sprite_pos = sprite.rect.center - self.offset - (42,0)
-        bg_rect = self.breaking_surf.get_rect(topleft=(0,0))
-        ratio = hold_time / max_time
+                if self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].type_before == 'block' and self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].folder == 'placeables':
+                    if self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].type != 'seed':
+                        Object(mouse_offset*tile_size, [self.visible_sprites,self.obstacle_sprites,self.interactables], self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].name)
+                        self.remove_item(self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'])
+    def draw_breaking(self,sprite,max_time):
+        sprite.damage_bar_pos = sprite.rect.center - self.offset - (42,0)
+        bg_rect = sprite.damage_bar.get_rect(topleft=(0,0))
+        ratio = sprite.damage_received / max_time
         current_rect = bg_rect.copy()
         current_rect.width = bg_rect.width * ratio
-        self.breaking_surf.fill('black')
-        pygame.draw.rect(self.breaking_surf,'red',current_rect)
-        pygame.draw.rect(self.breaking_surf,'black',bg_rect,2)
-
+        sprite.damage_bar.fill('black')
+        pygame.draw.rect(sprite.damage_bar,'red',current_rect)
+        pygame.draw.rect(sprite.damage_bar,'black',bg_rect,2)
+    def deal_breaking_damage(self,dmg,dt,sprite):
+        slot = self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]
+        if slot['ID'] != None:
+            if 'axe' in slot['ID'].name:
+                if self.axe_breakables(sprite.name) and not 'pickaxe' in slot['ID'].name:
+                    return (dmg*dt) * breaking_speed[slot['ID'].name.split('_')[0]]
+                if not self.axe_breakables(sprite.name) and 'pickaxe' in slot['ID'].name:
+                    return (dmg*dt) * breaking_speed[slot['ID'].name.split('_')[0]]
+        return dmg*dt
+    def axe_breakables(self,name):
+        for wood_type in ['oak','birch','redwood','cactus']:
+            if wood_type in name:
+                return True
+        return False
     #------------------------------Item logic----------------------------------------
 
     def drop_item(self):
@@ -338,15 +382,44 @@ class Main:
                                     sprite1.kill()
                                     sprite2.kill()
 
-    def animations(self):
-        if self.breaking:
-           self.display_surface.blit(self.breaking_surf,self.under_sprite_pos)
+    def display_breaking(self,sprite):
+        slot = self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]
+        if slot['ID'] != None:
+            if 'axe' in slot['ID'].name:
+                img = pygame.transform.rotate(slot['ID'].inv_image.copy(),sin(perf_counter()*15)*45)
+                img = pygame.transform.flip(img,self.check_negative(),False)
+                self.display_surface.blit(img,(self.player.rect.topleft-tool_offset[self.check_negative()])-self.offset)
+        self.set_status(self.check_negative())
+        if sprite.damage_received != 0:
+            self.display_surface.blit(sprite.damage_bar,sprite.damage_bar_pos)
+
+    def set_status(self,left):
+        if left:
+            self.player.status = self.player.status.replace(self.player.status.split('_')[0],'Left')
         else:
-            self.hold_timer = 0
+            self.player.status = self.player.status.replace(self.player.status.split('_')[0],'Right')
+
+    def check_negative(self):
+        num = pygame.math.Vector2(self.player.rect.center) - self.block.rect.center
+        if num[0] >= 0:
+            negative = True
+        else:
+            negative = False
+        return negative
+
+    def animations(self):
+        mouse_offset = self.mouse_offset//tile_size
+        all_time = self.ground[mouse_offset[1]][mouse_offset[0]]['all_time']
+        for sprite in self.interactables.sprites():
+            if sprite.type == 'block':
+                if sprite.being_damaged:
+                    self.display_breaking(sprite)
+                else:
+                    sprite.damage_received = 0
             
-        if self.ground_class.time_left != None:
-            txt = pygame.font.SysFont(None,48).render(str(self.ground_class.time_left), True, (255, 255, 255))
-            txt_box = pygame.Surface((len(str(self.ground_class.time_left))*18,28))
+        if all_time != None:
+            txt = pygame.font.SysFont(None,48).render(str(round(growth_time-all_time)), True, (255, 255, 255))
+            txt_box = pygame.Surface((len(str(round(growth_time-all_time)))*18,28))
             txt_box.blit(txt,(0,0))
             self.display_surface.blit(txt_box,self.mouse_pos-pygame.math.Vector2(0,32))
 
@@ -431,10 +504,10 @@ class Main:
         self.player_attack_update()
         self.visible_sprites.draw(self.offset)
         self.visible_sprites.enemy_update(self.player)
+        self.animations()
         self.update_visible_sprites()
         self.ui.update(click,self.current_time,self.dt)
         self.merge_item()
-        self.animations()
 
 class YSortCameraGroup(pygame.sprite.Group):
     def __init__(self,map,map_rect,offset_limit):

@@ -10,7 +10,7 @@ class Player(Entity):
         self.name = 'player'
         self.type = 'entity'
         self.player_name = 'Noble'
-        self.weapon = 'sword'
+        self.weapon = None
         #sprite setup
         self.image = pygame.Surface((64,64))
         self.rect = self.image.get_rect(topleft = pos)
@@ -25,19 +25,19 @@ class Player(Entity):
         # movement
         self.attacking = False
         self.attacking_time = None
-        self.attack_cooldown = 0.5
+        self.attack_cooldown = None
         self.attack_time = None
         self.facing_offset = pygame.math.Vector2()
         #vulnerable
         self.vulnerable = False
         self.vulnerable_time = None
-        self.vulnerable_cooldown = 0.5
+        self.vulnerable_cooldown = None
         #import sound
         self.weapon_attack_sound = pygame.mixer.Sound('../audio/sword.wav')
         self.weapon_attack_sound.set_volume(0.1)
 
     def import_player_assets(self):
-        character_path = f'../graphics/characters/{self.player_name}/animations'
+        character_path = f'../graphics/entities/characters/{self.player_name}/animations'
         self.animations = {'Down':{'Attack':[],'Idle':[],'Walk':[]},
                             'Up':{'Attack':[],'Idle':[],'Walk':[]},
                             'Left':{'Attack':[],'Idle':[],'Walk':[]},
@@ -90,10 +90,10 @@ class Player(Entity):
     def cooldowns(self,time):
         if self.vulnerable:
             self.attacking = False
-            if time - self.vulnerable_time >= self.vulnerable_cooldown:
+            if time - self.vulnerable_time >= weapon_data[self.weapon]['cooldown']:
                 self.vulnerable = False
         if self.attacking:
-            if time - self.attack_time >= self.attack_cooldown:
+            if time - self.attack_time >= weapon_data[self.weapon]['cooldown']:
                 self.attacking = False
                 self.vulnerable = True
                 self.vulnerable_time = perf_counter()

@@ -47,12 +47,8 @@ UPGRADE_BG_COLOR_SELECTED = '#EEEEEE'
 
 #Weapons
 weapon_data = {
-    'sword': {'cooldown': 100, 'damage': 15,'graphic':'../graphics/weapons/sword/full.png'},
-    'lance': {'cooldown': 400, 'damage': 30,'graphic':'../graphics/weapons/lance/full.png'},
-    'axe': {'cooldown': 300, 'damage': 20, 'graphic':'../graphics/weapons/axe/full.png'},
-    'rapier':{'cooldown': 50, 'damage': 8, 'graphic':'../graphics/weapons/rapier/full.png'},
-    'sai':{'cooldown': 80, 'damage': 10, 'graphic':'../graphics/weapons/sai/full.png'}}
-
+    'black_sword_1' : {'cooldown' : 0.25, 'damage' : 15}
+}
 weapon_width = {
     'sword':8
 }
@@ -131,6 +127,77 @@ object_chance = {
     'tree':(0,10),
     'rock':(0,10),
     'cactus':(0,10)
+}
+tool_offset = {
+    True : pygame.math.Vector2(tile_size//3,0),
+    False : pygame.math.Vector2(0,0)
+}
+breaking_speed = {
+    'black' : 2,
+    'white' : 2,
+    'blue' : 4,
+    'aqua' : 6,
+    'pink' : 8,
+    'mystical' : 10,
+}
+biome_objects = {
+    'plains':{'tree':0.1,'rock':0.2,'objects':['tree','rock']},
+    'forest':{'tree':0.25,'rock':0.1,'objects':['tree','rock']},
+    'rainforest':{'tree':0.35,'rock':0.08,'objects':['tree','rock']},
+    'savanna':{'tree':0.1,'rock':0.2,'cactus':0.05,'objects':['tree','rock','cactus']},
+    'desert':{'rock':0.15,'cactus':0.2,'objects':['rock','cactus']},
+}
+#idek i folders tsg visa full path ir viskas
+paths = {
+    'stick' : '../graphics/items/unplaceables/misc/',
+    'aqua_pickaxe' : '../graphics/items/unplaceables/tools/pickaxes',
+    'black_pickaxe' : '../graphics/items/unplaceables/tools/pickaxes',
+    'blue_pickaxe' : '../graphics/items/unplaceables/tools/pickaxes',
+    'mythical_pickaxe' : '../graphics/items/unplaceables/tools/pickaxes',
+    'pink_pickaxe' : '../graphics/items/unplaceables/tools/pickaxes',
+    'white_pickaxe' : '../graphics/items/unplaceables/tools/pickaxes',
+    'aqua_axe' : '../graphics/items/unplaceables/tools/axes',
+    'black_axe' : '../graphics/items/unplaceables/tools/axes',
+    'blue_axe' : '../graphics/items/unplaceables/tools/axes',
+    'mythical_axe' : '../graphics/items/unplaceables/tools/axes',
+    'pink_axe' : '../graphics/items/unplaceables/tools/axes',
+    'white_axe' :'../graphics/items/unplaceables/tools/axes',
+    'aqua_hoe' : '../graphics/items/unplaceables/tools/hoes',
+    'black_hoe' : '../graphics/items/unplaceables/tools/hoes',
+    'blue_hoe' : '../graphics/items/unplaceables/tools/hoes',
+    'mythical_hoe' : '../graphics/items/unplaceables/tools/hoes',
+    'pink_hoe' : '../graphics/items/unplaceables/tools/hoes',
+    'white_hoe' : '../graphics/items/unplaceables/tools/hoes',
+    'aqua_lance_1' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'black_lance_1' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'blue_lance_1' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'white_lance_1' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'mystical_lance_1' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'pink_lance_1' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'aqua_lance_2' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'black_lance_2' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'blue_lance_2' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'white_lance_2' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'mystical_lance_2' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'pink_lance_2' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'aqua_sword_1' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'black_sword_1' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'blue_sword_1' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'white_sword_1' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'mystical_sword_1' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'pink_sword_1' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'aqua_sword_2' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'black_sword_2' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'blue_sword_2' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'white_sword_2' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'mystical_sword_2' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'pink_sword_2' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'aqua_sword_3' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'black_sword_3' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'blue_sword_3' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'white_sword_3' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'mystical_sword_3' : '../graphics/items/unplaceables/tools/weapons/Sprite',
+    'pink_sword_3' : '../graphics/items/unplaceables/tools/weapons/Sprite',
 }
 
 block_positions = [(8,8),(32,12),(8,28),(32,32)]
