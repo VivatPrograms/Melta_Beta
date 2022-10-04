@@ -1,4 +1,4 @@
-from random import randint
+import random
 from Settings import *
 from Item import Item
 from Object import Object
@@ -44,24 +44,26 @@ class Ground:
                             if land['seed'] in recipe and seed in recipe:
                                 self.image.blit(self.Tile_map[2],(0,0))
                                 self.ground_changer(ground,mouse_offset,land['seeded_ground'],
-                                    item,randint(1,4),time,True)
+                                    item,random.randint(1,4),time,True)
                                 ui.remove(ui.inventory_menu[ui.selected_slot[1]][ui.selected_slot[0]],1)
                                 self.draw(mouse_offset)
                                 break
             else:
-                self.ground_changer(ground,mouse_offset,True,seed,randint(1,4),time,False)
+                self.ground_changer(ground,mouse_offset,True,seed,random.randint(1,4),time,False)
                 ui.remove(ui.inventory_menu[ui.selected_slot[1]][ui.selected_slot[0]],1)
                 self.draw(mouse_offset)
                 
-    def harvest(self,ground,ui,mouse_pos):
+    def harvest(self,ground,ui,mouse_pos,hoe):
         mouse_offset = mouse_pos//tile_size
         land = ground[mouse_offset[1]][mouse_offset[0]]
         if land['ground'] == 'plowed_ground' and land['seeded_ground']:
             if land['all_time'] == growth_time:
-                self.randomise_tree(land,mouse_pos)
+                self.randomise_tree(land,mouse_pos,hoe)
                 self.ground_changer(ground,mouse_offset,False,None,None,None,False)
                 self.image.blit(self.Tile_map[2],(0,0))
                 self.draw(mouse_offset)
+                return True
+        return False
                 
     def show_info(self,ground,mouse_pos,time):
         mouse_offset = mouse_pos//tile_size
@@ -82,11 +84,11 @@ class Ground:
         else:
             ground[mouse_offset[1]][mouse_offset[0]]['all_time'] = None
 
-    def randomise_tree(self,land,pos):
+    def randomise_tree(self,land,pos,hoe):
         pos = pos // tile_size * tile_size
-        if randint(0,1):
-            Item(Object((0,0),None,land['seed']),(pos[0]+randint(-32,32),pos[1]+randint(-32,32)),[self.visible_sprites,self.interactables],True,1)
-        Item(Object((0,0),None,land['seed']),(pos[0]+randint(-32,32),pos[1]+randint(-32,32)),[self.visible_sprites,self.interactables],False,land['amount'])
+        if random.random() >= 0.5:
+            Item(Object((0,0),None,land['seed']),(pos[0]+random.randrange(-32,32),pos[1]+random.randrange(-32,32)),[self.visible_sprites,self.interactables],True,1+hoe_buff[hoe]['seed'])
+        Item(Object((0,0),None,land['seed']),(pos[0]+random.randrange(-32,32),pos[1]+random.randrange(-32,32)),[self.visible_sprites,self.interactables],False,land['amount']+hoe_buff[hoe]['block'])
                 
     def check_growth(self,ground,y,x,time):
         if time - ground[y][x]['growth_time'] < growth_time:

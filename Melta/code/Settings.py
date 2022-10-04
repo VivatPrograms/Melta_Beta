@@ -147,6 +147,14 @@ biome_objects = {
     'savanna':{'tree':0.1,'rock':0.2,'cactus':0.05,'objects':['tree','rock','cactus']},
     'desert':{'rock':0.15,'cactus':0.2,'objects':['rock','cactus']},
 }
+hoe_buff = {
+    'black_hoe' : {'seed' : 0, 'block' : 1},
+    'white_hoe' : {'seed' : 0, 'block' : 1},
+    'aqua_hoe' : {'seed' : 1, 'block' : 0},
+    'blue_hoe' : {'seed' : 0, 'block' : 2},
+    'pink_hoe' : {'seed' : 1, 'block' : 1},
+    'mystical_hoe' : {'seed' : 2, 'block' : 0},
+}
 #idek i folders tsg visa full path ir viskas
 paths = {
     'stick' : '../graphics/items/unplaceables/misc/',

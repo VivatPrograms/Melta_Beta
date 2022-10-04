@@ -45,6 +45,8 @@ class Main:
         self.clicking = False
         self.offset = pygame.math.Vector2()
         self.object_collide = False
+        self.using_hoe = False
+        self.hoeing_time = 0.4
         #breaking
         self.time_to_hold = 100
         #map
@@ -56,7 +58,7 @@ class Main:
         self.last_time = perf_counter()
         self.ui.add_item(Item(Object((0,0),None,'black_pickaxe'),(0,0),None,False,1),64)
         self.ui.add_item(Item(Object((0,0),None,'black_axe'),(0,0),None,False,1),64)
-        self.ui.add_item(Item(Object((0,0),None,'oak_table_small'),(0,0),None,False,1),64)
+        self.ui.add_item(Item(Object((0,0),None,'black_hoe'),(0,0),None,False,1),64)
         
     #Map creation/Object creation
     def generate_map(self):
@@ -265,7 +267,15 @@ class Main:
                                         self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].name,
                                         self.current_time)
     def harvest(self):
-        self.ground_class.harvest(self.ground,self.ui,self.mouse_offset)
+        if self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'] != None:
+            if 'hoe' in self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].name:
+                if self.ground_class.harvest(self.ground,self.ui,self.mouse_offset,self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]['ID'].name):
+                    self.using_hoe = True
+                    self.tile_pos = self.mouse_offset
+                    self.hoe_time = perf_counter()
+                    self.set_status(self.check_negative(self.tile_pos))
+            else:
+                self.ground_class.harvest(self.ground,self.ui,self.mouse_offset,None)
     def tree_info(self):
         self.ground_class.show_info(self.ground,self.mouse_offset,self.current_time)
         
@@ -357,6 +367,9 @@ class Main:
         if self.clicking:
             if self.current_time - self.click_time >= self.click_cooldown:
                 self.clicking = False
+        if self.using_hoe:
+            if self.current_time - self.hoe_time >= self.hoeing_time:
+                self.using_hoe = False
 
     def merge_item(self):
         prev_sprite1 = None
@@ -387,9 +400,9 @@ class Main:
         if slot['ID'] != None:
             if 'axe' in slot['ID'].name:
                 img = pygame.transform.rotate(slot['ID'].inv_image.copy(),sin(perf_counter()*15)*45)
-                img = pygame.transform.flip(img,self.check_negative(),False)
-                self.display_surface.blit(img,(self.player.rect.topleft-tool_offset[self.check_negative()])-self.offset)
-        self.set_status(self.check_negative())
+                img = pygame.transform.flip(img,self.check_negative(self.block.rect.center),False)
+                self.display_surface.blit(img,(self.player.rect.topleft-tool_offset[self.check_negative(self.block.rect.center)])-self.offset)
+        self.set_status(self.check_negative(self.block.rect.center))
         if sprite.damage_received != 0:
             self.display_surface.blit(sprite.damage_bar,sprite.damage_bar_pos)
 
@@ -399,8 +412,8 @@ class Main:
         else:
             self.player.status = self.player.status.replace(self.player.status.split('_')[0],'Right')
 
-    def check_negative(self):
-        num = pygame.math.Vector2(self.player.rect.center) - self.block.rect.center
+    def check_negative(self,pos):
+        num = pygame.math.Vector2(self.player.rect.center) - pos
         if num[0] >= 0:
             negative = True
         else:
@@ -416,7 +429,11 @@ class Main:
                     self.display_breaking(sprite)
                 else:
                     sprite.damage_received = 0
-            
+        if self.using_hoe:
+            slot = self.ui.inventory_menu[self.ui.selected_slot[1]][self.ui.selected_slot[0]]
+            img = pygame.transform.rotate(slot['ID'].inv_image.copy(),sin(perf_counter()*15)*45)
+            img = pygame.transform.flip(img,self.check_negative(self.tile_pos),False)
+            self.display_surface.blit(img,(self.player.rect.topleft-tool_offset[self.check_negative(self.tile_pos)])-self.offset)
         if all_time != None:
             txt = pygame.font.SysFont(None,48).render(str(round(growth_time-all_time)), True, (255, 255, 255))
             txt_box = pygame.Surface((len(str(round(growth_time-all_time)))*18,28))
