@@ -294,7 +294,7 @@ class UI:
 
     def upgrade_input(self):
         for y in range(5):
-            slot = pygame.Rect(pygame.math.Vector2(0 * round(tile_size*reshape_game.x), y * round(tile_size*reshape_game.y)) + self.upgrade_rect.topleft,(tile_size*reshape_game.x, tile_size*reshape_game.y))
+            slot = pygame.Rect(pygame.math.Vector2(0 * round(tile_size*reshape_game.x), y * round(tile_size*reshape_game.y)) + self.upgrade_rect.topleft,(round(tile_size*reshape_game.x), round(tile_size*reshape_game.y)))
             if slot.collidepoint(self.mouse_pos):
                 self.upgrade_stat(y)
 
@@ -302,7 +302,7 @@ class UI:
         for y in menu.keys():
             for x in menu[y]:
                 slot = pygame.Rect(pygame.math.Vector2(x * round(tile_size*reshape_game.x), y * round(tile_size*reshape_game.y)) + rect.topleft,
-                (tile_size*reshape_game.x, tile_size*reshape_game.y))
+                (round(tile_size*reshape_game.x), round(tile_size*reshape_game.y)))
                 if slot.collidepoint(self.mouse_pos):
                     if self.dragging and self.dragging_item['ID'] != None:
                         if not menu == self.output_menu:
@@ -412,9 +412,9 @@ class UI:
             self.output_surf.blit(img,(0, 0))
             if self.crafting_item != None:
                 img = pygame.image.load(f'../graphics/objects/{self.crafting_item.name}.png').subsurface(
-                    pygame.Rect((0, 0), (tile_size*reshape_game.x, tile_size*reshape_game.y)))
+                    pygame.Rect((0, 0), (round(tile_size*reshape_game.x), round(tile_size*reshape_game.y))))
                 self.output_surf.blit(img, (0, 0))
-            pygame.draw.rect(self.output_surf, 'gold', pygame.Rect((0, 0), (tile_size*reshape_game.x, tile_size*reshape_game.y)), 2)
+            pygame.draw.rect(self.output_surf, 'gold', pygame.Rect((0, 0), (round(tile_size*reshape_game.x), round(tile_size*reshape_game.y))), 2)
         
     def delete(self):
         if self.active_menu == 'player_crafting_table':
@@ -587,7 +587,7 @@ class UI:
         self.display_upgrade('darkred',(0,tile_size*4))
         
     def display_upgrade(self,color,pos):
-        pygame.draw.rect(self.upgrade,color,pygame.Rect((pos),(tile_size*reshape_game.x, tile_size*reshape_game.y))) 
+        pygame.draw.rect(self.upgrade,color,pygame.Rect((pos),(round(tile_size*reshape_game.x), round(tile_size*reshape_game.y)))) 
         
     def draw(self,open_chest):
         self.display_all_upgrades()
@@ -629,7 +629,7 @@ class UI:
             self.change = False
         if self.dragging == True and self.dragging_item['ID'] != None:
             txt = self.font.render(str(self.dragging_amount),False,'white')
-            dragging_surface = pygame.Surface((tile_size*reshape_game.x,tile_size*reshape_game.y), pygame.SRCALPHA, 32).convert_alpha()
+            dragging_surface = pygame.Surface((round(tile_size*reshape_game.x),round(tile_size*reshape_game.y)), pygame.SRCALPHA, 32).convert_alpha()
             dragging_surface.blit(self.dragging_item['ID'].image,(0,0))
             dragging_surface.blit(txt,(font_offset,font_offset))
             self.display_surface.blit(dragging_surface,self.mouse_pos)

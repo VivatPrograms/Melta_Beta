@@ -16,7 +16,7 @@ class Button(pygame.sprite.Sprite):
         self.image.blit(txt,txt.get_rect(center=(self.rect.width/2,self.rect.height/2)))
     def key_explanation(self):
         txt = self.font.render(self.explanation,False,'#fbeee4')
-        pygame.display.get_surface().blit(txt,(self.pos[0]+(tile_size*reshape_game.x),self.pos[1]-(tile_size*reshape_game.y)//5))
+        pygame.display.get_surface().blit(txt,(self.pos[0]+(round(tile_size*reshape_game.x)),self.pos[1]-(round(tile_size*reshape_game.y))//5))
     def draw(self,i):
         pygame.display.get_surface().blit(self.image,(self.rect.x,self.rect.y+self.offset))
         if self.button_from[i] == 'control_options':

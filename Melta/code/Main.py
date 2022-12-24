@@ -22,7 +22,7 @@ class Main:
         self.create_map()
         self.display_surface = pygame.display.get_surface()
         self.offset_limit = pygame.math.Vector2(self.map_rect.width-WIDTH,self.map_rect.height-HEIGHT)
-        self.border = pygame.math.Vector2(self.map_rect.width-tile_size*reshape_game.x,self.map_rect.height-tile_size*reshape_game.y)
+        self.border = pygame.math.Vector2(self.map_rect.width-round(tile_size*reshape_game.x),self.map_rect.height-round(tile_size*reshape_game.y))
         #import classes
         self.visible_sprites = YSortCameraGroup(self.map,self.map_rect,self.offset_limit)
         self.obstacle_sprites = pygame.sprite.Group()
@@ -89,7 +89,7 @@ class Main:
             for coord in self.grid[key]:
                 self.coords.append(coord)
                 #general setup
-                rect = pygame.Rect((coord[0],coord[1]),(tile_size*reshape_game.x,tile_size*reshape_game.y))
+                rect = pygame.Rect((coord[0],coord[1]),(round(tile_size*reshape_game.x),round(tile_size*reshape_game.y)))
                 #obstacles/enemies
                 for name in objects:
                     if key == name:
@@ -98,7 +98,7 @@ class Main:
                     if key == name:
                         img = pygame.image.load(f'../graphics/tiles/{name}.png').convert_alpha()
                         tile_size_ratio = pygame.math.Vector2(self.map_rect.width)
-                        self.map.blit(pygame.transform.scale(img,(tile_size*reshape_game.x,tile_size*reshape_game.y)), rect)
+                        self.map.blit(pygame.transform.scale(img,(round(tile_size*reshape_game.x),round(tile_size*reshape_game.y))), rect)
         self.ground = copy.deepcopy(self.perlin.biomes)
         self.ground_class = Ground(self.map,self.Tile_map,self.ground,self.visible_sprites,self.interactables)
         for y in self.perlin.biomes:
@@ -535,7 +535,7 @@ class Main:
         disable_attack()
         self.ui.remove_health(amount)
         self.player.hurt_time = perf_counter()
-        self.animation_player.create_particles(attack_type, pos, [self.visible_sprites],pygame.Rect((pos),(tile_size*reshape_game.x,tile_size*reshape_game.y)))
+        self.animation_player.create_particles(attack_type, pos, [self.visible_sprites],pygame.Rect((pos),(round(tile_size*reshape_game.x),round(tile_size*reshape_game.y))))
 
     def trigger_destruction_particles(self, pos, size, spriterect):
         self.animation_player.create_destruction_particles(pos,[self.visible_sprites],size,spriterect)

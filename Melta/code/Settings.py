@@ -137,7 +137,7 @@ object_chance = {
     'cactus':(0,10)
 }
 tool_offset = {
-    True : pygame.math.Vector2(tile_size*reshape_game.x//3,0),
+    True : pygame.math.Vector2(round(tile_size*reshape_game.x)//3,0),
     False : pygame.math.Vector2(0,0)
 }
 breaking_speed = {

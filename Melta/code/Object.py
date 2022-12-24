@@ -20,20 +20,20 @@ class Object(pygame.sprite.Sprite):
     def create_inv_image(self):
         for name in ['sword','lance']:
             if not name in self.name:
-                self.inv_image = pygame.transform.scale(self.image,(tile_size*reshape_game.x,tile_size*reshape_game.y))
+                self.inv_image = pygame.transform.scale(self.image,(round(tile_size*reshape_game.x),round(tile_size*reshape_game.y)))
             else:
                 img = pygame.image.load(f'{paths[self.name]}/{self.name}.png')
                 self.inv_image = pygame.transform.scale(img,(img.get_width()*reshape_game.x,img.get_height()*reshape_game.y))
 
     def object_offset(self,pos): 
-        offset = (self.image.get_width()//4,self.image.get_height() - tile_size*reshape_game.y)
+        offset = (self.image.get_width()//4,self.image.get_height() - round(tile_size*reshape_game.y))
         return pygame.math.Vector2(pos) - offset
 
     def get_folder_and_image(self):
         try:
             folder = 'unplaceables'
             self.image = pygame.transform.scale(pygame.image.load(f'{paths[self.name]}/{self.name}.png'),
-            (tile_size*reshape_game.x,tile_size*reshape_game.y))
+            (round(tile_size*reshape_game.x),round(tile_size*reshape_game.y)))
         except KeyError:
             folder = 'placeables'
             img = pygame.image.load(f'../graphics/items/placeables/objects/{self.name}.png')

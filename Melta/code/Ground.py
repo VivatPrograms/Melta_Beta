@@ -11,7 +11,7 @@ class Ground:
         self.ground = ground
         self.visible_sprites = visible_sprites
         self.interactables = interactables
-        self.image = pygame.Surface((tile_size*reshape_game.x,tile_size*reshape_game.y))
+        self.image = pygame.Surface((round(tile_size*reshape_game.x),round(tile_size*reshape_game.y)))
         self.time_left = None
         
     def beach_check(self,biome):
@@ -99,7 +99,7 @@ class Ground:
     def update_map(self,land,y,x,time):
         item = land['seed']
         growth_index = land['all_time'] / growth_time
-        size = ((tile_size*reshape_game.x)*growth_index,(tile_size*reshape_game.y)*growth_index)
+        size = (round(tile_size*reshape_game.x)*growth_index,round(tile_size*reshape_game.y)*growth_index)
         pos = (round((tile_size*reshape_game.x)/2)-size[0],round((tile_size*reshape_game.y)/2)-size[1])
         img = pygame.transform.scale(pygame.image.load(f'../graphics/items/placeables/objects/bush.png'),size)
         item_img = pygame.transform.scale(pygame.image.load(f'../graphics/items/placeables/objects/{item}.png').subsurface(pygame.Rect((0,0),(22*reshape_game.x,22*reshape_game.y))),(22,22))

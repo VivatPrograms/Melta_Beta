@@ -17,7 +17,7 @@ class ObjectDisplay:
                 return True
         return False
     def object_offset(self,pos):
-        offset = (self.image.get_width()//4,self.image.get_height() - tile_size*reshape_game.y)
+        offset = (self.image.get_width()//4,self.image.get_height() - round(tile_size*reshape_game.y))
         return pygame.math.Vector2(pos) - offset
     def convert_object(self,color):
         mask = pygame.mask.from_surface(self.image)

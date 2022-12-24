@@ -21,10 +21,10 @@ class Item(pygame.sprite.Sprite):
             folder = 'unplaceables'
             if not self.seed:
                 self.image = pygame.transform.scale(pygame.image.load(f'{paths[self.name]}/{self.name}.png'),
-                (tile_size*reshape_game.x,tile_size*reshape_game.y))
+                (round(tile_size*reshape_game.x),round(tile_size*reshape_game.y)))
             else:
                 self.image = pygame.transform.scale(pygame.image.load('../graphics/items/placeables/seeds/seed.png'),
-                (tile_size*reshape_game.x,tile_size*reshape_game.y))
+                (round(tile_size*reshape_game.x),round(tile_size*reshape_game.y)))
         except KeyError:
             folder = 'placeables'
             self.image = pygame.image.load(f'../graphics/items/placeables/objects/{self.name}.png')

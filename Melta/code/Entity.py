@@ -15,8 +15,8 @@ class Entity(pygame.sprite.Sprite):
     def move(self, speed, dt, walking=True, attacking=False):
         if walking and not attacking:
             # print(self.offset_limit)
-            width = ((tile_size*reshape_game.x) - self.hitbox.width)//2
-            height = ((tile_size*reshape_game.y) - self.hitbox.height)//2
+            width = (round(tile_size*reshape_game.x) - self.hitbox.width)//2
+            height = (round(tile_size*reshape_game.y) - self.hitbox.height)//2
             if self.direction.magnitude() != 0:
                 self.direction = self.direction.normalize()
             self.position.x += self.direction.x * speed * dt
