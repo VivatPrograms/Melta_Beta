@@ -5,7 +5,7 @@ from Entity import Entity
 from Import_support import *
 
 class Enemy(Entity):
-    def __init__(self,monster_name,pos,groups,obstacle_sprites,damage_player,trigger_death_particles,add_exp,border):
+    def __init__(self,monster_name,pos,groups,obstacle_sprites,damage_player,trigger_destruction_particles,add_exp,border):
         #general setup
         super().__init__(groups,pos,border)
         self.name = 'enemy'
@@ -16,7 +16,7 @@ class Enemy(Entity):
         self.image = self.animations[self.status.split('_')[0]][self.status.split('_')[1]][0]
         #movement
         self.rect = self.image.get_rect(topleft = pos)
-        self.hitbox = self.rect.inflate(0,-10)
+        self.hitbox = self.rect.inflate(0,-10*reshape_game.y)
         self.obstacle_sprites = obstacle_sprites
         # stats
         self.monster_name = monster_name
@@ -36,7 +36,7 @@ class Enemy(Entity):
         self.attack_time = None
         self.attack_cooldown = 0.75
         self.damage_player = damage_player
-        self.trigger_death_particles = trigger_death_particles
+        self.trigger_destruction_particles = trigger_destruction_particles
         self.add_exp = add_exp
         #invincibility timer
         self.vulnerable = True
@@ -145,7 +145,7 @@ class Enemy(Entity):
     def check_death(self):
         if self.health <= 0:
             self.kill()
-            self.trigger_death_particles(self.rect.topleft, self.monster_name)
+            self.trigger_destruction_particles(self.rect.topleft, (32,32), self.rect)
             self.add_exp(self.exp)
             self.death_sound.play()
 

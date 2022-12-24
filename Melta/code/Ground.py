@@ -11,7 +11,7 @@ class Ground:
         self.ground = ground
         self.visible_sprites = visible_sprites
         self.interactables = interactables
-        self.image = pygame.Surface((tile_size,tile_size))
+        self.image = pygame.Surface((tile_size*reshape_game.x,tile_size*reshape_game.y))
         self.time_left = None
         
     def beach_check(self,biome):
@@ -21,8 +21,7 @@ class Ground:
                 dont_run = True
         return dont_run
     
-    def ground_logic(self,mouse_pos,ground,perlin):
-        mouse_offset = mouse_pos//tile_size
+    def ground_logic(self,mouse_offset,ground,perlin):
         biome = perlin[mouse_offset[1]][mouse_offset[0]]
         if ground[mouse_offset[1]][mouse_offset[0]]['ground'] == 'plowed_ground':
             self.restore_ground(mouse_offset,ground,perlin)
@@ -30,11 +29,10 @@ class Ground:
             if biome != 'water':
                 if not self.beach_check(biome):
                     ground[mouse_offset[1]][mouse_offset[0]]['ground'] = 'plowed_ground'
-                    self.image.blit(self.Tile_map[2],(0,0))
+                    self.image.blit(pygame.transform.scale(self.Tile_map[2],(self.image.get_width(),self.image.get_height())),(0,0))
                     self.draw(mouse_offset)
 
-    def seeding_logic(self,ground,ui,mouse_pos,seed,time):
-        mouse_offset = mouse_pos//tile_size
+    def seeding_logic(self,ground,ui,mouse_offset,seed,time):
         land = ground[mouse_offset[1]][mouse_offset[0]]
         if land['ground'] == 'plowed_ground':
             if land['seeded_ground']: 
@@ -53,20 +51,18 @@ class Ground:
                 ui.remove(ui.inventory_menu[ui.selected_slot[1]][ui.selected_slot[0]],1)
                 self.draw(mouse_offset)
                 
-    def harvest(self,ground,ui,mouse_pos,hoe):
-        mouse_offset = mouse_pos//tile_size
+    def harvest(self,ground,ui,mouse_offset,hoe):
         land = ground[mouse_offset[1]][mouse_offset[0]]
         if land['ground'] == 'plowed_ground' and land['seeded_ground']:
             if land['all_time'] == growth_time:
-                self.randomise_tree(land,mouse_pos,hoe)
+                self.randomise_tree(land,mouse_offset,hoe)
                 self.ground_changer(ground,mouse_offset,False,None,None,None,False)
-                self.image.blit(self.Tile_map[2],(0,0))
+                self.image.blit(pygame.transform.scale(self.Tile_map[2],(self.image.get_width(),self.image.get_height())),(0,0))
                 self.draw(mouse_offset)
                 return True
         return False
                 
-    def show_info(self,ground,mouse_pos,time):
-        mouse_offset = mouse_pos//tile_size
+    def show_info(self,ground,mouse_offset,time):
         land = ground[mouse_offset[1]][mouse_offset[0]]
         if land['growth_time'] != None:
             self.time_left = round(growth_time - land['all_time'])
@@ -84,11 +80,15 @@ class Ground:
         else:
             ground[mouse_offset[1]][mouse_offset[0]]['all_time'] = None
 
-    def randomise_tree(self,land,pos,hoe):
-        pos = pos // tile_size * tile_size
-        if random.random() >= 0.5:
-            Item(Object((0,0),None,land['seed']),(pos[0]+random.randrange(-32,32),pos[1]+random.randrange(-32,32)),[self.visible_sprites,self.interactables],True,1+hoe_buff[hoe]['seed'])
-        Item(Object((0,0),None,land['seed']),(pos[0]+random.randrange(-32,32),pos[1]+random.randrange(-32,32)),[self.visible_sprites,self.interactables],False,land['amount']+hoe_buff[hoe]['block'])
+    def randomise_tree(self,land,mouse_offset,hoe):
+        pos = pygame.math.Vector2()
+        pos.x = mouse_offset.x*round(reshape_game.x*tile_size)
+        pos.y = mouse_offset.y*round(reshape_game.y*tile_size)
+        extra_seed = hoe_buff[hoe]['seed'] if random.random() <= 0.33 else 0
+        extra_block = hoe_buff[hoe]['block'] if random.random() <= 0.33 else 0
+        if random.random() <= 0.5:
+            Item(Object((0,0),None,land['seed']),(pos[0]+random.randrange(-32,32),pos[1]+random.randrange(-32,32)),[self.visible_sprites,self.interactables],True,1+extra_seed)
+        Item(Object((0,0),None,land['seed']),(pos[0]+random.randrange(-32,32),pos[1]+random.randrange(-32,32)),[self.visible_sprites,self.interactables],False,land['amount']+extra_block)
                 
     def check_growth(self,ground,y,x,time):
         if time - ground[y][x]['growth_time'] < growth_time:
@@ -99,39 +99,35 @@ class Ground:
     def update_map(self,land,y,x,time):
         item = land['seed']
         growth_index = land['all_time'] / growth_time
-        size = tile_size * growth_index
-        pos = (tile_size-size) / 2 
-        img = pygame.transform.scale(pygame.image.load(f'../graphics/items/placeables/objects/bush.png'),(size,size))
-        item_img = pygame.transform.scale(pygame.image.load(f'../graphics/items/placeables/objects/{item}.png').subsurface(pygame.Rect((0,0),(tile_size,tile_size))),(22,22))
+        size = ((tile_size*reshape_game.x)*growth_index,(tile_size*reshape_game.y)*growth_index)
+        pos = (round((tile_size*reshape_game.x)/2)-size[0],round((tile_size*reshape_game.y)/2)-size[1])
+        img = pygame.transform.scale(pygame.image.load(f'../graphics/items/placeables/objects/bush.png'),size)
+        item_img = pygame.transform.scale(pygame.image.load(f'../graphics/items/placeables/objects/{item}.png').subsurface(pygame.Rect((0,0),(22*reshape_game.x,22*reshape_game.y))),(22,22))
         self.draw_plant(land,pos,y,x,img,item_img)
         
     def draw_plant(self,land,pos,y,x,img,item_img):
         self.image.blit(self.Tile_map[2],(0,0))
-        self.image.blit(img,(pos,pos))
+        self.image.blit(img,pos)
         if land['all_time'] == growth_time:
             for i in range(land['amount']):
                 self.image.blit(item_img,block_positions[i])
         self.draw(pygame.math.Vector2(x,y))
             
     def draw(self,mouse_offset):
-        self.map.blit(self.image,mouse_offset*tile_size)
+        real_offset = pygame.math.Vector2()
+        real_offset.x = mouse_offset.x*round(reshape_game.x*tile_size)
+        real_offset.y = mouse_offset.y*round(reshape_game.y*tile_size)
+        self.map.blit(self.image,real_offset)
         
     def restore_ground(self,mouse_offset,ground,perlin):
-        if perlin[mouse_offset[1]][mouse_offset[0]] == 'forest':
-            self.map.blit(pygame.image.load(f'../graphics/tiles/forest.png'),mouse_offset*tile_size)
-            ground[mouse_offset[1]][mouse_offset[0]]['ground'] = 'forest'
-        elif perlin[mouse_offset[1]][mouse_offset[0]] == 'rainforest':
-            self.map.blit(pygame.image.load(f'../graphics/tiles/rainforest.png'),mouse_offset*tile_size)
-            ground[mouse_offset[1]][mouse_offset[0]]['ground'] = 'rainforest'
-        elif perlin[mouse_offset[1]][mouse_offset[0]] == 'savanna':
-            self.map.blit(pygame.image.load(f'../graphics/tiles/savanna.png'),mouse_offset*tile_size)
-            ground[mouse_offset[1]][mouse_offset[0]]['ground'] = 'savanna'
-        elif perlin[mouse_offset[1]][mouse_offset[0]] == 'desert':
-            self.map.blit(pygame.image.load(f'../graphics/tiles/desert.png'),mouse_offset*tile_size)
-            ground[mouse_offset[1]][mouse_offset[0]]['ground'] = 'desert'
-        elif perlin[mouse_offset[1]][mouse_offset[0]] == 'plains':
-            self.map.blit(pygame.image.load(f'../graphics/tiles/plains.png'),mouse_offset*tile_size)
-            ground[mouse_offset[1]][mouse_offset[0]]['ground'] = 'plains'
+        real_offset = pygame.math.Vector2()
+        real_offset.x = mouse_offset.x*round(reshape_game.x*tile_size)
+        real_offset.y = mouse_offset.y*round(reshape_game.y*tile_size)
+        for name in biomes:
+            if perlin[mouse_offset[1]][mouse_offset[0]] == name:
+                img = pygame.transform.scale(pygame.image.load(f'../graphics/tiles/{name}.png'),(self.image.get_width(),self.image.get_height()))
+                self.map.blit(img,real_offset)
+                ground[mouse_offset[1]][mouse_offset[0]]['ground'] = name
         
     def run(self,ground,y,x,time):
         self.check_growth(ground,y,x,time)

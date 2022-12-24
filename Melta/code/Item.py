@@ -6,21 +6,25 @@ class Item(pygame.sprite.Sprite):
             super().__init__(groups)
         else:
             super().__init__()
+        self.seed = seed
         self.name = sprite.name
         self.amount = amount
         self.pos = pos
-        self.seed = seed
         self.folder = self.get_folder_and_image()
-        self.seed_image = pygame.image.load(f'../graphics/items/placeables/seeds/seed.png')
         self.determine_type(seed,sprite)
         self.determine_type_before(sprite)
-        pygame.draw.rect(self.image, 'aqua', pygame.Rect((0, 0), (tile_size, tile_size)), 2)
+        slot = pygame.image.load('../graphics/items/unplaceables/other/slot.png')
+        self.image.blit(pygame.transform.scale(slot,(slot.get_width()*reshape_game.x,slot.get_height()*reshape_game.y)),(0, 0))
 
     def get_folder_and_image(self):
         try:
             folder = 'unplaceables'
-            self.image = pygame.transform.scale(pygame.image.load(f'{paths[self.name]}/{self.name}.png'),
-            (tile_size,tile_size))
+            if not self.seed:
+                self.image = pygame.transform.scale(pygame.image.load(f'{paths[self.name]}/{self.name}.png'),
+                (tile_size*reshape_game.x,tile_size*reshape_game.y))
+            else:
+                self.image = pygame.transform.scale(pygame.image.load('../graphics/items/placeables/seeds/seed.png'),
+                (tile_size*reshape_game.x,tile_size*reshape_game.y))
         except KeyError:
             folder = 'placeables'
             self.image = pygame.image.load(f'../graphics/items/placeables/objects/{self.name}.png')
@@ -29,10 +33,11 @@ class Item(pygame.sprite.Sprite):
     def determine_type(self,seed,sprite):
         if seed: 
             self.type = 'seed'
-            self.inv_image = sprite.seed_image
+            self.inv_image = self.image
         else:
             self.type = 'item_drop'
             self.inv_image = sprite.inv_image
+            self.image_before = sprite.image
         self.image = copy.copy(self.inv_image)
         self.rect = self.image.get_rect(topleft=self.pos)
     

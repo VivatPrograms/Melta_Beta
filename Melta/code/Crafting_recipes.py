@@ -54,7 +54,10 @@ recipes = {
     'pink_hoe':[[['pink_crystal','pink_crystal',None],[None,'stick',None],[None,'stick',None]],
                 [[None,'aqua_crystal','aqua_crystal'],[None,'stick',None],[None,'stick',None]]],
     'white_hoe':[[['white_crystal','white_crystal',None],[None,'stick',None],[None,'stick',None]],
-                [[None,'white_crystal','white_crystal'],[None,'stick',None],[None,'stick',None]]],}
+                [[None,'white_crystal','white_crystal'],[None,'stick',None],[None,'stick',None]]],
+    'oak_chest':[[['oak_wood','oak_wood','oak_wood'],['oak_wood',None,'oak_wood'],['oak_wood','oak_wood','oak_wood']]],
+    'birch_chest':[[['birch_wood','birch_wood','birch_wood'],['birch_wood',None,'birch_wood'],['birch_wood','birch_wood','birch_wood']]],
+    'redwood_chest':[[['redwood_wood','redwood_wood','redwood_wood'],['redwood_wood',None,'redwood_wood'],['redwood_wood','redwood_wood','redwood_wood']]],}
 }
 
 

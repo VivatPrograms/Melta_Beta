@@ -1,10 +1,9 @@
-from multiprocessing import allow_connection_pickling
 from Settings import *
 from Crafting_recipes import *
 from Object import Object
 from Item import Item
-import copy
-
+from Button import Button
+from Textbox import TextBox
 class UI:
     def __init__(self,player,visible_sprites,interactables):
         super().__init__()
@@ -13,54 +12,91 @@ class UI:
         self.visible_sprites = visible_sprites
         self.interactables = interactables
         self.display_surface = pygame.display.get_surface()
-        self.font = pygame.font.Font(None, 32)
+        self.font_size = round(24 * resize)
+        self.font = pygame.font.Font('../font/mc_font.ttf', self.font_size)
         #setup
+        self.pressed = False
+        self.changing_keybind = False
         self.dragging = False
-        self.dragging_item = None
-        self.dragging_amount = None
+        self.active_menu = None
+        self.ingame = True
+        self.change = False
         self.main_menu = False
         self.crafting_table = False
-        self.change = False
         self.clicking = False
         self.click_cooldown = 0.4
         self.upgrade_cost = 45
         self.selected_slot = [0,0]
-        self.selected_crafting_slot = [0,0]
-        self.selected_big_crafting_slot = [0,0]
-        self.selected_output_slot = [0,0]
-        self.bar = pygame.Surface((3*tile_size, tile_size))
-        self.upgrade = pygame.Surface((tile_size,5*tile_size))
-        #stats rects
-        self.health_rect = self.bar.get_rect(topleft=(0,0))
-        self.stamina_rect = self.bar.get_rect(topleft=(0,tile_size))
-        self.level_rect = pygame.Rect((0,2*tile_size),(tile_size, tile_size))
-        self.exp_rect = pygame.Rect((tile_size,2*tile_size),(2*tile_size, tile_size))
-        self.upgrade_rect = self.upgrade.get_rect(topleft=(0,3*tile_size))
-        #current stats
-        self.current_health = 75
-        self.current_stamina = 30
-        self.current_exp = 540
+        self.selected_other_slot = [0,0]
+        self.bar = pygame.Surface((4.5*round(tile_size*reshape_game.x), self.font_size))
+        self.upgrade = pygame.Surface((self.font_size*reshape_game.x,5*round(tile_size*reshape_game.y)))
         #inventory
+        self.inventory_open = True
         self.inventory_menu = {0:{0: {'ID':None,'amount':0},1:{'ID':None,'amount':0},2:{'ID':None,'amount':0},
                         3:{'ID':None,'amount':0},4:{'ID':None,'amount':0},5:{'ID':None,'amount':0},
                         6:{'ID':None,'amount':0},7:{'ID':None,'amount':0},8:{'ID':None,'amount':0}}}
-        self.inventory_surf = pygame.Surface((9*tile_size,1*tile_size))
-        self.inventory_rect = self.inventory_surf.get_rect(center=(WIDTH // 2, HEIGHT - 32))
+        self.inventory_surf = pygame.Surface((9*round(tile_size*reshape_game.x),1*round(tile_size*reshape_game.y)))
+        self.inventory_rect = self.inventory_surf.get_rect(center=(WIDTH // 2, HEIGHT - 32 - HEIGHT//10))
         #crafting
         self.crafting_menu = {0: {0: {'ID': None, 'amount': 0}, 1: {'ID': None, 'amount': 0}},
                               1: {0: {'ID': None, 'amount': 0}, 1: {'ID': None, 'amount': 0}}}
-        self.crafting_surf = pygame.Surface((2*tile_size,2*tile_size))
+        self.crafting_surf = pygame.Surface((2*round(tile_size*reshape_game.x),2*round(tile_size*reshape_game.y)))
         self.crafting_rect = self.crafting_surf.get_rect(center=(WIDTH // 2, HEIGHT // 2))
         #crafting table
         self.big_crafting_menu = {0: {0: {'ID': None, 'amount': 0}, 1: {'ID': None, 'amount': 0}, 2: {'ID': None, 'amount': 0}},
                                 1: {0: {'ID': None, 'amount': 0}, 1: {'ID': None, 'amount': 0}, 2: {'ID': None, 'amount': 0}},
                                 2: {0: {'ID': None, 'amount': 0}, 1: {'ID': None, 'amount': 0}, 2: {'ID': None, 'amount': 0}}}
-        self.big_crafting_surf = pygame.Surface((3*tile_size,3*tile_size))
-        self.big_crafting_rect = self.big_crafting_surf.get_rect(center=(WIDTH // 2, HEIGHT // 2 + tile_size//2))
+        self.big_crafting_surf = pygame.Surface((3*round(tile_size*reshape_game.x),3*round(tile_size*reshape_game.y)))
+        self.big_crafting_rect = self.big_crafting_surf.get_rect(center=(WIDTH // 2, HEIGHT // 2 + round(tile_size*reshape_game.y)//2))
         #crafting item
         self.output_menu = {0: {0: {'ID': None, 'amount': 0}}}
-        self.output_surf = pygame.Surface((tile_size,tile_size))
-        self.output_rect = self.output_surf.get_rect(center=self.crafting_rect.center - pygame.math.Vector2(0,self.crafting_rect.height-32))
+        self.output_surf = pygame.Surface((round(tile_size*reshape_game.x),round(tile_size*reshape_game.y)))
+        self.output_rect = self.output_surf.get_rect(center=self.crafting_rect.center - pygame.math.Vector2(0,self.crafting_rect.height-32*reshape_game.y))
+        #chest
+        self.chest_menu_surf = pygame.Surface((9*round(tile_size*reshape_game.x),3*round(tile_size*reshape_game.y)))
+        self.chest_menu_rect = self.chest_menu_surf.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+        #stats rects
+        self.health_rect = self.bar.get_rect(topleft=(self.inventory_rect.x,self.inventory_rect.y-self.font_size))
+        self.stamina_rect = self.bar.get_rect(topleft=(self.inventory_rect.x+4.5*round(tile_size*reshape_game.x),self.inventory_rect.y-self.font_size))
+        self.level_rect = pygame.Rect((self.inventory_rect.centerx-self.font_size//2,self.inventory_rect.y-3.5*self.font_size),(self.font_size*2*reshape_game.x, self.font_size*2*reshape_game.y))
+        self.exp_rect = pygame.Rect((self.inventory_rect.x,self.inventory_rect.y-1.5*self.font_size),(9*round(tile_size*reshape_game.x), self.font_size//2))
+        self.upgrade_rect = self.upgrade.get_rect(topleft=(0,3*round(self.font_size*reshape_game.y)))
+        self.health_upgrades = 0
+        self.stamina_upgrades = 0
+        #current stats
+        self.current_health = 75
+        self.current_stamina = 30
+        self.current_exp = 540
+        #buttons
+        self.buttons = [Button('MAIN MENU',(WIDTH//2,HEIGHT//4.5),['main_menu_options'],'options_button',['options'],self.font,None),
+                        Button('CONTROLS',(WIDTH//2,HEIGHT//4.5+1.25*height_offset['options_button']),['control_options'],'options_button',['options'],self.font,None),
+                        Button('WORLD SEARCH',(WIDTH//2,HEIGHT//4.5+2.5*height_offset['options_button']),['world_search_options'],'options_button',['options'],self.font,None),
+                        Button('UPGRADES',(WIDTH//2,HEIGHT//4.5+3.75*height_offset['options_button']),['upgrades_options'],'options_button',['options'],self.font,None),
+                        Button(keybinds['Walk up'],(WIDTH//4,HEIGHT//6+0*height_offset['options_button']),['control_options'],'key_button',['control_options'],self.font,'Walk up'),
+                        Button(keybinds['Walk left'],(WIDTH//4,HEIGHT//6+1*height_offset['options_button']),['control_options'],'key_button',['control_options'],self.font,'Walk left'),
+                        Button(keybinds['Walk down'],(WIDTH//4,HEIGHT//6+2*height_offset['options_button']),['control_options'],'key_button',['control_options'],self.font,'Walk down'),
+                        Button(keybinds['Walk right'],(WIDTH//4,HEIGHT//6+3*height_offset['options_button']),['control_options'],'key_button',['control_options'],self.font,'Walk right'),
+                        Button(keybinds['Enable/disable inventory'],(WIDTH//4,HEIGHT//6+4*height_offset['options_button']),['control_options'],'key_button',['control_options'],self.font,'Enable/disable inventory'),
+                        Button(keybinds['Create farmable land'],(WIDTH//4,HEIGHT//6+5*height_offset['options_button']),['control_options'],'key_button',['control_options'],self.font,'Create farmabale land'),
+                        Button(keybinds['Basic crafting menu'],(WIDTH//4,HEIGHT//6+6*height_offset['options_button']),['control_options'],'key_button',['control_options'],self.font,'Basic crafting menu'),
+                        Button(keybinds['Drop selected item'],(WIDTH//4,HEIGHT//6+7*height_offset['options_button']),['control_options'],'key_button',['control_options'],self.font,'Drop selected item'),
+                        Button(keybinds['Attack'],(WIDTH//4,HEIGHT//6+8*height_offset['options_button']),['control_options'],'key_button',['control_options'],self.font,'Attack'),
+                        Button(keybinds['Select slot 1'],(WIDTH//1.5,HEIGHT//6+0*height_offset['options_button']),['control_options'],'key_button',['control_options'],self.font,'Select slot 1'),
+                        Button(keybinds['Select slot 2'],(WIDTH//1.5,HEIGHT//6+1*height_offset['options_button']),['control_options'],'key_button',['control_options'],self.font,'Select slot 2'),
+                        Button(keybinds['Select slot 3'],(WIDTH//1.5,HEIGHT//6+2*height_offset['options_button']),['control_options'],'key_button',['control_options'],self.font,'Select slot 3'),
+                        Button(keybinds['Select slot 4'],(WIDTH//1.5,HEIGHT//6+3*height_offset['options_button']),['control_options'],'key_button',['control_options'],self.font,'Select slot 4'),
+                        Button(keybinds['Select slot 5'],(WIDTH//1.5,HEIGHT//6+4*height_offset['options_button']),['control_options'],'key_button',['control_options'],self.font,'Select slot 5'),
+                        Button(keybinds['Select slot 6'],(WIDTH//1.5,HEIGHT//6+5*height_offset['options_button']),['control_options'],'key_button',['control_options'],self.font,'Select slot 6'),
+                        Button(keybinds['Select slot 7'],(WIDTH//1.5,HEIGHT//6+6*height_offset['options_button']),['control_options'],'key_button',['control_options'],self.font,'Select slot 7'),
+                        Button(keybinds['Select slot 8'],(WIDTH//1.5,HEIGHT//6+7*height_offset['options_button']),['control_options'],'key_button',['control_options'],self.font,'Select slot 8'),
+                        Button(keybinds['Select slot 9'],(WIDTH//1.5,HEIGHT//6+8*height_offset['options_button']),['control_options'],'key_button',['control_options'],self.font,'Select slot 9'),
+                        Button('PLAY',(WIDTH//2,HEIGHT//3.5+2.5*height_offset['options_button']),['connect_options'],'options_button',['main_menu_options'],self.font,None),
+                        Button('CONNECT',(WIDTH//1.5,HEIGHT//6+5*height_offset['options_button']),['world_search_options'],'options_button',['connect_options'],self.font,None),
+                        ]
+        self.text_boxes = [
+            TextBox((WIDTH//1.5,HEIGHT//6+0*height_offset['options_button']),'connect_options',self.font),
+            TextBox((WIDTH//1.5,HEIGHT//6+1*height_offset['options_button']),'connect_options',self.font)
+        ]
         #draw ui
         self.ui_update(self.inventory_surf,self.inventory_menu,True)
         self.ui_update(self.crafting_surf,self.crafting_menu,False)
@@ -125,75 +161,148 @@ class UI:
         self.inventory_menu = old_menu
         return False
 
-    def input(self,click):
+    def input(self,click,key_press,open_chest):
+        self.inventories_input(click,open_chest)
+        self.buttons_input(click)
+        self.textboxes_input(click,key_press)
+        self.change_keybind(key_press)
+
+    def change_keybind(self,key_press):
+        if self.changing_keybind and key_press:
+            try:
+                keybinds[self.changing_keybind.explanation] = chr(key_press)
+                self.changing_keybind.name = chr(key_press)
+                self.changing_keybind.draw_image('key_button')
+                self.changing_keybind = False
+            except ValueError: pass
+
+    def buttons_input(self,click):
+        for button in self.buttons:
+            for i in range(len(button.button_from)):
+                if button.button_from[i] == self.active_menu:
+                    if self.active_menu != 'control_options':
+                        self.changing_keybind = False
+                    if button.rect.collidepoint(self.mouse_pos):
+                        button.offset = 4
+                        if click == 1:
+                            if self.active_menu == 'control_options':
+                                if self.changing_keybind: self.changing_keybind.draw_image('key_button')
+                                button.draw_image('selected_key_button')
+                                self.changing_keybind = button
+                            self.active_menu = button.button_to[i]
+                            self.check_if_ingame()
+                            break
+                    else:
+                        button.offset = 0
+
+    def check_if_ingame(self):
+        if self.active_menu == 'main_menu_options': self.ingame = False
+        elif self.active_menu == None: self.ingame = True
+
+    def textboxes_input(self,click,key_press):
+        key = pygame.key.get_pressed()
+        for textbox in self.text_boxes:
+            if textbox.textbox_from == self.active_menu:
+                if textbox.rect.collidepoint(self.mouse_pos) and click == 1:
+                    textbox.selected = True
+                elif not textbox.rect.collidepoint(self.mouse_pos) and click == 1:
+                    textbox.selected = False
+            if textbox.selected:
+                letter = None
+                if key_press:
+                    try:
+                        if chr(key_press) in legal_letters or key_press == 8: letter = key_press
+                    except ValueError: pass
+                if letter:
+                    if not self.pressed:
+                        if letter == 8: 
+                            textbox.text = self.remove_last_str(textbox.text)
+                            self.pressed = True
+                        else: 
+                            if len(textbox.text) <= text_limit:
+                                textbox.text = textbox.text + chr(self.return_fixed_letter(key,letter))
+                                self.pressed = True
+                else: self.pressed = False
+                textbox.draw_img()
+
+    def return_fixed_letter(self,key,letter):
+        if key[pygame.K_LSHIFT] or key[pygame.K_RSHIFT]: return ord(chr(letter).upper())
+        elif pygame.key.get_mods() == pygame.KMOD_CAPS: return ord(chr(letter).upper())
+        return letter
+
+    def remove_last_str(self,txt):
+        text = txt[:-1]
+        return text
+                    
+    def inventories_input(self,click,open_chest):
         self.mouse_pos = pygame.mouse.get_pos()
         if click:
-            if self.main_menu:
+            if self.active_menu == 'player_crafting_table':
                 if self.crafting_rect.collidepoint(self.mouse_pos):
                     if click == 1:
-                        self.slot_input(self.crafting_menu,self.crafting_rect,[self.selected_crafting_slot],False,True)
+                        self.slot_input(self.crafting_menu,self.crafting_rect,[self.selected_other_slot],False,True)
                     elif click == 3:
-                        self.slot_input(self.crafting_menu,self.crafting_rect,[self.selected_crafting_slot],True,True)
+                        self.slot_input(self.crafting_menu,self.crafting_rect,[self.selected_other_slot],True,True)
                     self.change = True
                 elif self.output_rect.collidepoint(self.mouse_pos):
-                    self.slot_input(self.output_menu,self.output_rect,[self.selected_output_slot],True,True)
+                    self.slot_input(self.output_menu,self.output_rect,[self.selected_other_slot],True,True)
                     self.change = True
                 elif self.upgrade_rect.collidepoint(self.mouse_pos):
-                    if click == 1:
-                        self.upgrade_input()
-                elif self.inventory_rect.collidepoint(self.mouse_pos):
-                    if click == 1:
-                        self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],False,True)
-                        self.change = True
-                    elif click == 3:
-                        self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],True,True)
-                        self.change = True
-            elif self.crafting_table:
+                    if click == 1:self.upgrade_input()
+                elif self.inventory_rect.collidepoint(self.mouse_pos):self.inventory_collisions(click)
+            elif self.active_menu == 'crafting_table':
                 if self.big_crafting_rect.collidepoint(self.mouse_pos):
                     if click == 1:
-                        self.slot_input(self.big_crafting_menu,self.big_crafting_rect,[self.selected_crafting_slot],False,True)
+                        self.slot_input(self.big_crafting_menu,self.big_crafting_rect,[self.selected_other_slot],False,True)
                     elif click == 3:
-                        self.slot_input(self.big_crafting_menu,self.big_crafting_rect,[self.selected_big_crafting_slot],True,True)
+                        self.slot_input(self.big_crafting_menu,self.big_crafting_rect,[self.selected_other_slot],True,True)
                     self.change = True
                 elif self.output_rect.collidepoint(self.mouse_pos):
-                    self.slot_input(self.output_menu,self.output_rect,[self.selected_output_slot],True,True)
+                    self.slot_input(self.output_menu,self.output_rect,[self.selected_other_slot],True,True)
                     self.change = True
                 elif self.upgrade_rect.collidepoint(self.mouse_pos):
+                    if click == 1:self.upgrade_input()
+                elif self.inventory_rect.collidepoint(self.mouse_pos):self.inventory_collisions(click)
+            elif self.active_menu == 'chest':
+                if self.chest_menu_rect.collidepoint(self.mouse_pos):
                     if click == 1:
-                        self.upgrade_input()
-                elif self.inventory_rect.collidepoint(self.mouse_pos):
-                    if click == 1:
-                        self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],False,True)
-                        self.change = True
+                        self.slot_input(open_chest.chest_inventory,self.chest_menu_rect,[self.selected_other_slot],False,True)
                     elif click == 3:
-                        self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],True,True)
-                        self.change = True
+                        self.slot_input(open_chest.chest_inventory,self.chest_menu_rect,[self.selected_other_slot],True,True)
+                    self.change = True
+                elif self.upgrade_rect.collidepoint(self.mouse_pos):
+                    if click == 1:self.upgrade_input()
+                elif self.inventory_rect.collidepoint(self.mouse_pos):self.inventory_collisions(click)
             else:
                 if self.inventory_rect.collidepoint(self.mouse_pos):
-                    if click == 1:
-                        self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],False,False)
-                        self.change = True
-                    elif click == 3:
-                        self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],True,False)
-                        self.change = True
+                    if self.inventory_open:
+                        if click == 1:
+                            self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],False,False)
+                            self.change = True
+                        elif click == 3:
+                            self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],True,False)
+                            self.change = True
+
+    def inventory_collisions(self,click):
+        if self.inventory_open:
+            if click == 1:
+                self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],False,True)
+                self.change = True
+            elif click == 3:
+                self.slot_input(self.inventory_menu,self.inventory_rect,[self.selected_slot],True,True)
+                self.change = True
 
     def upgrade_input(self):
         for y in range(5):
-            slot = pygame.Rect(pygame.math.Vector2(0 * tile_size, y * tile_size) + self.upgrade_rect.topleft,(tile_size, tile_size))
+            slot = pygame.Rect(pygame.math.Vector2(0 * round(tile_size*reshape_game.x), y * round(tile_size*reshape_game.y)) + self.upgrade_rect.topleft,(tile_size*reshape_game.x, tile_size*reshape_game.y))
             if slot.collidepoint(self.mouse_pos):
                 self.upgrade_stat(y)
-                
-    def upgrade_stat(self,index):
-        stat = stats[index]
-        if self.current_exp >= self.upgrade_cost:
-            if player_data[stat] < player_max[stat]:
-                player_data[stat] = player_data[stat] * 1.1
-            self.current_exp -= self.upgrade_cost
 
     def slot_input(self,menu,rect,selected_slot,right_click,allow_drag):
         for y in menu.keys():
             for x in menu[y]:
-                slot = pygame.Rect(pygame.math.Vector2(x * tile_size, y * tile_size) + rect.topleft,(tile_size, tile_size))
+                slot = pygame.Rect(pygame.math.Vector2(x * round(tile_size*reshape_game.x), y * round(tile_size*reshape_game.y)) + rect.topleft,
+                (tile_size*reshape_game.x, tile_size*reshape_game.y))
                 if slot.collidepoint(self.mouse_pos):
                     if self.dragging and self.dragging_item['ID'] != None:
                         if not menu == self.output_menu:
@@ -215,6 +324,17 @@ class UI:
                     selected_slot[0][0] = x
                     selected_slot[0][1] = y
 
+    def upgrade_stat(self,index):
+        stat = stats[index]
+        if self.current_exp >= self.upgrade_cost:
+            if player_data[stat] < player_max[stat]:
+                player_data[stat] = player_data[stat] * 1.1
+                self.current_exp -= self.upgrade_cost
+                if stat == 'health':
+                    self.health_upgrades += 1
+                elif stat == 'stamina':
+                    self.stamina_upgrades += 1
+
     def return_drag(self):
         if self.dragging:
             self.add_item(self.dragging_item['ID'],self.dragging_amount)
@@ -234,7 +354,6 @@ class UI:
         if self.clicking:
             if time - self.click_time >= self.click_cooldown:
                 self.clicking = False
-
     def drop_item(self,y,x,menu):
         if menu[y][x]['ID'] != None:
             if self.dragging_item['ID'].name == menu[y][x]['ID'].name:
@@ -273,32 +392,36 @@ class UI:
 
     def ui_update(self,surf,menu,allow):
         if menu != None:
-            surf.fill('black')
             for y in menu.keys():
                 if y != 'ID' or y != 'amount':
                     for x in menu[y].keys():
+                        img = pygame.transform.scale(pygame.image.load('../graphics/items/unplaceables/other/slot_inside.png'),(round(tile_size*reshape_game.x),round(tile_size*reshape_game.y)))
+                        surf.blit(img,(x * round(tile_size * reshape_game.x), y * round(tile_size * reshape_game.y)))
                         if menu[y][x]['ID'] != None:
-                            text = self.font.render(str(menu[y][x]['amount']), True, 'white')
-                            font_rect = text.get_rect(topleft=(tile_size * x + font_offset, tile_size * y + font_offset))
-                            surf.blit(menu[y][x]['ID'].inv_image, (x * tile_size, y * tile_size))
+                            text = self.font.render(str(menu[y][x]['amount']), False, 'white')
+                            font_rect = text.get_rect(topleft=(round(reshape_game.x*tile_size) * x + font_offset,round(reshape_game.y*tile_size) * y + font_offset))
+                            surf.blit(menu[y][x]['ID'].inv_image, (x * round(tile_size * reshape_game.x), y * round(tile_size * reshape_game.y)))
                             surf.blit(text, font_rect)
-                        pygame.draw.rect(surf, 'gold', pygame.Rect((x * tile_size, y * tile_size), (tile_size, tile_size)), 2)
+                        img = pygame.transform.scale(pygame.image.load('../graphics/items/unplaceables/other/slot.png'),(round(tile_size*reshape_game.x),round(tile_size*reshape_game.y)))
+                        surf.blit(img,(x * round(tile_size * reshape_game.x), y * round(tile_size * reshape_game.y)))
                         if allow:
-                            pygame.draw.rect(surf, 'aqua', pygame.Rect((self.selected_slot[0] * tile_size, 0), (tile_size, tile_size)), 2)
+                            img = pygame.transform.scale(pygame.image.load('../graphics/items/unplaceables/other/selected_slot.png'),(round(tile_size*reshape_game.x),round(tile_size*reshape_game.y)))
+                            surf.blit(img,(self.selected_slot[0] * round(tile_size * reshape_game.x), y * round(tile_size * reshape_game.y)))
         else:
-            self.output_surf.fill('black')
+            img = pygame.transform.scale(pygame.image.load('../graphics/items/unplaceables/other/slot_inside.png'),(round(tile_size*reshape_game.x),round(tile_size*reshape_game.y)))
+            self.output_surf.blit(img,(0, 0))
             if self.crafting_item != None:
                 img = pygame.image.load(f'../graphics/objects/{self.crafting_item.name}.png').subsurface(
-                    pygame.Rect((0, 0), (tile_size, tile_size)))
+                    pygame.Rect((0, 0), (tile_size*reshape_game.x, tile_size*reshape_game.y)))
                 self.output_surf.blit(img, (0, 0))
-            pygame.draw.rect(self.output_surf, 'gold', pygame.Rect((0, 0), (tile_size, tile_size)), 2)
+            pygame.draw.rect(self.output_surf, 'gold', pygame.Rect((0, 0), (tile_size*reshape_game.x, tile_size*reshape_game.y)), 2)
         
     def delete(self):
-        if self.main_menu:
+        if self.active_menu == 'player_crafting_table':
             for y in self.crafting_menu.keys():
                 for x in self.crafting_menu[y].keys():
                     self.remove(self.crafting_menu[y][x],1)
-        elif self.crafting_table:
+        elif self.active_menu == 'crafting_table':
             for y in self.big_crafting_menu.keys():
                 for x in self.big_crafting_menu[y].keys():
                     self.remove(self.big_crafting_menu[y][x],1)
@@ -306,12 +429,12 @@ class UI:
     def outputs(self):
         x_level = []
         y_level = []
-        if self.main_menu:
+        if self.active_menu == 'player_crafting_table':
             crafting = [[None,None],[None,None]]
             crafting2 = [[None,None],[None,None]]
             self.output(self.crafting_menu,x_level,y_level,crafting,crafting2)
             self.crafting(crafting,crafting2,crafting[0]+crafting[1],3,x_level,y_level)
-        elif self.crafting_table:
+        elif self.active_menu == 'crafting_table':
             crafting = [[None,None,None],[None,None,None],[None,None,None]]
             crafting2 = [[None,None,None],[None,None,None],[None,None,None]]
             self.output(self.big_crafting_menu,x_level,y_level,crafting,crafting2)
@@ -409,31 +532,36 @@ class UI:
                     self.remove(menu[y][x],menu[y][x]['amount'])
                     
     def display_all_stats(self):
-        self.display_stats('health',self.current_health,self.health_rect,'red')
-        self.display_stats('stamina',self.current_stamina,self.stamina_rect,'aqua')
+        self.display_stats('health',self.current_health,self.health_rect,'#FF6961')
+        self.display_stats('stamina',self.current_stamina,self.stamina_rect,'#6488ea')
         self.display_level('white')
-        self.display_stats('exp',self.current_exp-(self.current_exp//50*50),self.exp_rect,'green')
+        self.display_stats('exp',self.current_exp-(self.current_exp//50*50),self.exp_rect,'#71eeb8')
         
     def display_stats(self,stat,current,rect,color):
         ratio = current / player_data[stat]
         current_rect = rect.copy()
         current_rect.width = rect.width * ratio
-        pygame.draw.rect(self.display_surface,'black',rect) 
+        pygame.draw.rect(self.display_surface,dark_color[stat],rect) 
         pygame.draw.rect(self.display_surface,color,current_rect)
-        pygame.draw.rect(self.display_surface,'black',rect,2) 
-        
+        pygame.draw.rect(self.display_surface,'#3a3a50',rect,round(2*resize)) 
+        if stat == 'stamina' and self.inventory_menu[self.selected_slot[1]][self.selected_slot[0]]['ID'] != None:
+            if self.check_item(self.inventory_menu[self.selected_slot[1]][self.selected_slot[0]],['sword','lance']):
+                self.draw_attack_line(stat,rect)
+    
+    def draw_attack_line(self,stat,rect):
+        new_ratio = 12/player_data[stat]*rect.width
+        start_pos = (new_ratio+rect.x,rect.y+2)
+        end_pos = (new_ratio+rect.x,rect.y+self.font_size-3)
+        pygame.draw.line(self.display_surface,'#fbeee4',start_pos,end_pos,3)
+
     def display_level(self,color):
-        text = pygame.font.Font(None,86).render(str(self.current_exp // player_data['exp']), True, color)
-        pos = self.level_rect.topright - self.get_pos(len(str(self.current_exp // 50)))
-        pygame.draw.rect(self.display_surface,'black',self.level_rect) 
-        self.display_surface.blit(text,pos)
+        if self.current_exp // 50 > 0:
+            text = pygame.font.Font('../font/mc_font.ttf',self.font_size*2).render(str(self.current_exp // player_data['exp']), False, color)
+            pos = (self.exp_rect.centerx-self.font_size*self.get_pos(len(str(self.current_exp // 50))),self.exp_rect.y-self.font_size*1.5)
+            self.display_surface.blit(text,pos)
     
     def get_pos(self,length):
-        if length == 1:
-            pos = pygame.math.Vector2(48, -4)
-        else:
-            pos = pygame.math.Vector2(tile_size * len(str(self.current_exp // 50)) // len(str(self.current_exp // 50)), -4)
-        return pos
+        return 0.5*length
 
     def remove_stamina(self,amount):
         self.current_stamina -= amount
@@ -447,9 +575,9 @@ class UI:
 
     def regain_hp_stamina(self,dt):
         if self.current_health < player_data['health']:
-            self.current_health += player_data['health'] * 0.015 * dt
+            self.current_health += 0.025 + 0.2*self.health_upgrades * dt
         if self.current_stamina < player_data['stamina']:
-            self.current_stamina += player_data['stamina'] * 0.05 * dt
+            self.current_stamina += 0.045 + 0.025*self.stamina_upgrades * dt
     
     def display_all_upgrades(self):
         self.display_upgrade('red',(0,tile_size*0))
@@ -459,39 +587,55 @@ class UI:
         self.display_upgrade('darkred',(0,tile_size*4))
         
     def display_upgrade(self,color,pos):
-        pygame.draw.rect(self.upgrade,color,pygame.Rect((pos),(tile_size, tile_size))) 
+        pygame.draw.rect(self.upgrade,color,pygame.Rect((pos),(tile_size*reshape_game.x, tile_size*reshape_game.y))) 
+        
+    def draw(self,open_chest):
+        self.display_all_upgrades()
+        if self.active_menu == 'player_crafting_table':
+            self.display_surface.blit(self.crafting_surf,self.crafting_rect)
+            self.display_surface.blit(self.output_surf,self.output_rect)
+            self.display_surface.blit(self.upgrade,self.upgrade_rect)
+        elif self.active_menu == 'crafting_table':
+            self.display_surface.blit(self.big_crafting_surf,self.big_crafting_rect)
+            self.display_surface.blit(self.output_surf,self.output_rect)
+            self.display_surface.blit(self.upgrade,self.upgrade_rect)
+        elif self.active_menu == 'chest':
+            self.display_surface.blit(self.chest_menu_surf,self.chest_menu_rect)
+            self.display_surface.blit(self.upgrade,self.upgrade_rect)
+        else:
+            if self.active_menu != None:
+                self.inventory_open = False
+                for button in self.buttons:
+                    for i in range(len(button.button_from)):
+                        if button.button_from[i] == self.active_menu:
+                            button.draw(i)
+                            break
+                for textbox in self.text_boxes:
+                    if textbox.textbox_from == self.active_menu:
+                        textbox.draw()
 
-    def other(self):
+        if self.inventory_open:
+            self.display_all_stats()
+            self.display_surface.blit(self.inventory_surf, self.inventory_rect)
+        #dragging drawing
         if self.change:
             self.ui_update(self.inventory_surf,self.inventory_menu,True)
             self.ui_update(self.crafting_surf,self.crafting_menu,False)
             self.ui_update(self.big_crafting_surf,self.big_crafting_menu,False)
             self.outputs()
             self.ui_update(self.output_surf,self.output_menu,False)
+            if self.active_menu == 'chest':
+                self.ui_update(self.chest_menu_surf,open_chest.chest_inventory,False)
             self.change = False
         if self.dragging == True and self.dragging_item['ID'] != None:
-            txt = self.font.render(str(self.dragging_amount),True,'white')
-            dragging_surface = pygame.Surface((tile_size,tile_size), pygame.SRCALPHA, 32).convert_alpha()
+            txt = self.font.render(str(self.dragging_amount),False,'white')
+            dragging_surface = pygame.Surface((tile_size*reshape_game.x,tile_size*reshape_game.y), pygame.SRCALPHA, 32).convert_alpha()
             dragging_surface.blit(self.dragging_item['ID'].image,(0,0))
             dragging_surface.blit(txt,(font_offset,font_offset))
             self.display_surface.blit(dragging_surface,self.mouse_pos)
 
-    def draw(self):
-        self.display_all_stats()
-        self.display_all_upgrades()
-        self.display_surface.blit(self.inventory_surf, self.inventory_rect)
-        if self.main_menu:
-            self.display_surface.blit(self.crafting_surf,self.crafting_rect)
-            self.display_surface.blit(self.output_surf,self.output_rect)
-            self.display_surface.blit(self.upgrade,self.upgrade_rect)
-        elif self.crafting_table:
-            self.display_surface.blit(self.big_crafting_surf,self.big_crafting_rect)
-            self.display_surface.blit(self.output_surf,self.output_rect)
-            self.display_surface.blit(self.upgrade,self.upgrade_rect)
-
-    def update(self,click,time,dt):
+    def update(self,click,key_press,time,dt,open_chest):
         self.cooldowns(time)
-        self.input(click)
+        self.input(click,key_press,open_chest)
         self.regain_hp_stamina(dt)
-        self.draw()
-        self.other()
+        self.draw(open_chest)

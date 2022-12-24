@@ -9,7 +9,7 @@ class Weapon(pygame.sprite.Sprite):
         #graphic
         fullpath = f'../graphics/items/unplaceables/tools/weapons/SpriteInHand/{player.weapon}.png'
         self.image = pygame.image.load(fullpath).convert_alpha()
-        self.image = pygame.transform.scale(self.image,(self.image.get_width()*3,self.image.get_height()*3))
+        self.image = pygame.transform.scale(self.image,(self.image.get_width()*reshape_game.x*3,self.image.get_height()*reshape_game.y*3))
         #placement
         if direction == 'Right':
             self.image = pygame.transform.rotate(self.image,90)

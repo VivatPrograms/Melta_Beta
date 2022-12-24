@@ -12,9 +12,9 @@ class Player(Entity):
         self.player_name = 'Noble'
         self.weapon = None
         #sprite setup
-        self.image = pygame.Surface((64,64))
+        self.image = pygame.Surface((tile_size*reshape_game.x,tile_size*reshape_game.y))
         self.rect = self.image.get_rect(topleft = pos)
-        self.hitbox = self.rect.inflate(-16,-24)
+        self.hitbox = self.rect.inflate(-16*reshape_game.x,-24*reshape_game.y)
         #Functions
         self.obstacle_sprites = obstacle_sprites
         self.create_attack = create_attack
@@ -49,9 +49,9 @@ class Player(Entity):
                 index = animation_index[direction]
                 if animation == 'Walk':
                     for i in range(4):
-                        self.animations[direction][animation].append(pygame.transform.scale(images[index+i*4],(64,64)))
+                        self.animations[direction][animation].append(pygame.transform.scale(images[index+i*4],(tile_size*reshape_game.x,tile_size*reshape_game.y)))
                 else:
-                    self.animations[direction][animation].append(pygame.transform.scale(images[index],(64,64)))
+                    self.animations[direction][animation].append(pygame.transform.scale(images[index],(tile_size*reshape_game.x,tile_size*reshape_game.y)))
 
     def get_status(self):
         #idle status
@@ -76,15 +76,15 @@ class Player(Entity):
     def get_facing_offset(self):
         if self.status == 'Up_Walk':
             self.facing_offset.x = 0
-            self.facing_offset.y = -tile_size
+            self.facing_offset.y = -tile_size*reshape_game.y
         elif self.status == 'Down_Walk':
             self.facing_offset.x = 0
-            self.facing_offset.y = tile_size
+            self.facing_offset.y = tile_size*reshape_game.y
         elif self.status == 'Left_Walk':
-            self.facing_offset.x = -tile_size
+            self.facing_offset.x = -tile_size*reshape_game.x
             self.facing_offset.y = 0
         elif self.status == 'Right_Walk':
-            self.facing_offset.x = tile_size
+            self.facing_offset.x = tile_size*reshape_game.x
             self.facing_offset.y = 0
 
     def cooldowns(self,time):

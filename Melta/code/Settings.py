@@ -1,6 +1,6 @@
 import pygame
 #Settings for map
-grid_width = 50
+grid_width =34
 watermass = 1.5
 
 #biomes for map
@@ -9,10 +9,14 @@ stone = 'S'
 dessert = 'D'
 trees = 'T'
 
-WIDTH = 1280
-HEIGHT = 720
+screen = pygame.display.set_mode()
+WIDTH, HEIGHT = screen.get_size()
 FPS = 165
 tile_size = 64
+default_width = 1280
+default_height = 720
+reshape_game = pygame.math.Vector2(WIDTH/default_width,HEIGHT/default_height) 
+resize = (reshape_game.x+reshape_game.y)/2
 #hitbox offset
 HITBOX_OFFSET = {
     'player':-26,
@@ -21,7 +25,6 @@ HITBOX_OFFSET = {
     'invisible':0
 }
 #UI
-font_offset = 2
 BAR_HEIGHT = 20
 HEALTH_BAR_WIDTH = 200
 ENERGY_BAR_WIDTH = 140
@@ -47,7 +50,7 @@ UPGRADE_BG_COLOR_SELECTED = '#EEEEEE'
 
 #Weapons
 weapon_data = {
-    'black_sword_1' : {'cooldown' : 0.25, 'damage' : 15}
+    'black_sword_1' : {'cooldown' : 0.25, 'damage' : 150}
 }
 weapon_width = {
     'sword':8
@@ -72,7 +75,7 @@ player_data = {
     'health' : 100,
     'stamina' : 50,
     'exp' : 50,
-    'speed' : 1,
+    'speed' : 5,
     'resistance' : 1,
     'strength' : 1
 }
@@ -89,6 +92,11 @@ stats = {
     2 : 'speed',
     3 : 'resistance',
     4 : 'strength'
+}
+dark_color = {
+    'health': '#803632',
+    'stamina': '#384c80',
+    'exp': '#3d8063',
 }
 animation_index = {
     'Down':0,
@@ -129,7 +137,7 @@ object_chance = {
     'cactus':(0,10)
 }
 tool_offset = {
-    True : pygame.math.Vector2(tile_size//3,0),
+    True : pygame.math.Vector2(tile_size*reshape_game.x//3,0),
     False : pygame.math.Vector2(0,0)
 }
 breaking_speed = {
@@ -148,6 +156,7 @@ biome_objects = {
     'desert':{'rock':0.15,'cactus':0.2,'objects':['rock','cactus']},
 }
 hoe_buff = {
+    'None' : {'seed' : 0, 'block' : 0},
     'black_hoe' : {'seed' : 0, 'block' : 1},
     'white_hoe' : {'seed' : 0, 'block' : 1},
     'aqua_hoe' : {'seed' : 1, 'block' : 0},
@@ -209,7 +218,15 @@ paths = {
 }
 
 block_positions = [(8,8),(32,12),(8,28),(32,32)]
-
+chest_inventory = {0:{0:{'ID':None,'amount':0},1:{'ID':None,'amount':0},2:{'ID':None,'amount':0},
+                        3:{'ID':None,'amount':0},4:{'ID':None,'amount':0},5:{'ID':None,'amount':0},
+                        6:{'ID':None,'amount':0},7:{'ID':None,'amount':0},8:{'ID':None,'amount':0}},
+                    1:{0:{'ID':None,'amount':0},1:{'ID':None,'amount':0},2:{'ID':None,'amount':0},
+                        3:{'ID':None,'amount':0},4:{'ID':None,'amount':0},5:{'ID':None,'amount':0},
+                        6:{'ID':None,'amount':0},7:{'ID':None,'amount':0},8:{'ID':None,'amount':0}},
+                    2:{0:{'ID':None,'amount':0},1:{'ID':None,'amount':0},2:{'ID':None,'amount':0},
+                        3:{'ID':None,'amount':0},4:{'ID':None,'amount':0},5:{'ID':None,'amount':0},
+                        6:{'ID':None,'amount':0},7:{'ID':None,'amount':0},8:{'ID':None,'amount':0}}}
 change_tile = {
     "[['w', '.', '.'], ['w', '_', '.'], ['w', '.', '.']]":'left',
     "[['w', '.', '.'], ['w', '_', '.'], ['.', '.', '.']]":'left',
@@ -272,3 +289,47 @@ change_tile = {
     "[['.', '.', 'w'], ['.', '_', 'w'], ['w', 'w', '.']]":'surrounded_bottomright',
     "[['.', '.', 'w'], ['.', '_', '.'], ['w', 'w', 'w']]":'surrounded_bottomright'
 }
+
+keybinds = {
+    'Walk up':'w',
+    'Walk left':'a',
+    'Walk down':'s',
+    'Walk right':'d',
+    'Enable/disable inventory':'i',
+    'Create farmable land':'p',
+    'Basic crafting menu':'e',
+    'Drop selected item':'q',
+    'Attack':chr(32),
+    'Select slot 1':'1',
+    'Select slot 2':'2',
+    'Select slot 3':'3',
+    'Select slot 4':'4',
+    'Select slot 5':'5',
+    'Select slot 6':'6',
+    'Select slot 7':'7',
+    'Select slot 8':'8',
+    'Select slot 9':'9',
+}
+
+list_of_slots = ['Select slot 1','Select slot 2','Select slot 3',
+                'Select slot 4','Select slot 5','Select slot 6',
+                'Select slot 7','Select slot 8','Select slot 9',]
+
+background_img = pygame.image.load('../graphics/items/unplaceables/other/Background_image.png')
+dark = pygame.Surface((background_img.get_width(), background_img.get_height()), flags=pygame.SRCALPHA)
+dark.fill((125, 25, 25, 100))
+background_img.blit(dark, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
+#will subtract 50 from the RGB values of the surface called image.
+text_limit = 16
+legal_letters = 'qwertyuiopasdfghjklzxcvbnm0123456789'
+options_button = pygame.image.load(f'../graphics/items/unplaceables/other/options_button.png')
+key_button = pygame.image.load(f'../graphics/items/unplaceables/other/key_button.png')
+height_offset = {
+    'options_button':options_button.get_height()*reshape_game.y,
+    'key_button':key_button.get_height()*reshape_game.y,
+}
+font_offset = 4*reshape_game.x
+chunk_size = 5
+offset_limit = pygame.math.Vector2(WIDTH//1920,HEIGHT//1080)
+biomes = ['forest','rainforest','savanna','desert','plains']
+objects = ['rock','tree','cactus']

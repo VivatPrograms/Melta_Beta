@@ -59,26 +59,10 @@ class PerlinNoise:
         for row_index,row in enumerate(grid):
             self.biomes[row_index] = {}
             for col_index,value in enumerate(row):
-                coord = tile_size*col_index,tile_size*row_index
+                coord = (round(tile_size*reshape_game.x)*col_index,round(tile_size*reshape_game.y)*row_index)
                 self.biomes[row_index][col_index] = value
                 self.container[value].append(coord)
                 self.randomise_object(value,coord)
-                # if value == 'water':
-                #     self.biomes[row_index][col_index] = value
-                #     self.container[value].append(coord)
-                #     self.randomise_object('rock',coord)
-                # elif value == 'desert':
-                #     self.biomes[row_index][col_index] = value
-                #     self.container[value].append(coord)
-                #     self.randomise_object('cactus',coord)
-                # else:
-                #     if not self.nearby_water(grid, row_index, col_index):
-                #         self.biomes[row_index][col_index] = value
-                #         self.container[value].append(coord)
-                #         self.randomise_object('tree',coord)
-                #     else:
-                #         self.biomes[row_index][col_index] = self.nearby_water(grid, row_index, col_index)
-                #         self.container[self.nearby_water(grid, row_index, col_index)].append(coord)
                         
     def randomise_object(self,biome,coord):
         object = random.choice(biome_objects[biome]['objects'])
